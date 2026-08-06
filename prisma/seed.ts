@@ -8,7 +8,6 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("⏳ Memulai seeder database...");
 
-  // 1. Injeksi Data Peran (Role) Dasar sesuai SRS
   const daftarPeran = [
     {
       nama: "super_admin",
@@ -33,7 +32,6 @@ async function main() {
   }
   console.log("✅ Data Peran (Role) berhasil dibuat!");
 
-  // 2. Injeksi Akun Super Admin Pertama
   const peranSuperAdmin = await prisma.peran.findUnique({
     where: { nama: "super_admin" },
   });
@@ -62,7 +60,7 @@ async function main() {
 main()
   .catch((e) => {
     console.error(e);
-    // Menggunakan exit langsung tanpa memanggil objek process manual jika didefinisikan
+
     throw e;
   })
   .finally(async () => {

@@ -4,12 +4,10 @@ import { globalErrorHandler } from "./middlewares/error.middleware";
 
 const app: Application = express();
 
-// Middleware Global
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Route Pengecekan Kesehatan Server (Health Check)
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
@@ -17,7 +15,6 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-// Middleware Error Global harus ditaruh paling bawah
 app.use(globalErrorHandler);
 
 export default app;
