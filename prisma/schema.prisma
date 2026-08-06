@@ -33,6 +33,8 @@ model Pengguna {
   noTelepon      String?   @map("no_telepon") @db.VarChar(20)
   status         String?   @db.VarChar(20)
   terakhirLogin  DateTime? @map("terakhir_login") @db.Timestamp()
+  kodeOtp        String?   @map("kode_otp") @db.VarChar(10)
+  otpTimeout     DateTime? @map("otp_timeout") @db.Timestamp()
   dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()

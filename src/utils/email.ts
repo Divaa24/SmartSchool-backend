@@ -1,7 +1,17 @@
 import { Resend } from "resend";
 import process from "node:process";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resendInstance: Resend | null = null;
+
+const getResend = () => {
+  if (!resendInstance) {
+    if (!process.env.RESEND_API_KEY) {
+      console.warn("RESEND_API_KEY is not set!");
+    }
+    resendInstance = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendInstance;
+};
 
 interface SendOtpParams {
   email: string;
@@ -21,7 +31,7 @@ export async function sendOtpEmail({
     const from =
       process.env.EMAIL_FROM || "SmartSchool <onboarding@resend.dev>";
 
-    const response = await resend.emails.send({
+    const response = await getResend().emails.send({
       from: from,
       to: [email],
       subject: `[SmartSchool] Kode OTP Verifikasi Anda: ${kodeOtp}`,
