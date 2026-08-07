@@ -52,6 +52,10 @@ model Pengguna {
   siswaKelas            SiswaKelas[]
   notifikasiDiterima    Notifikasi[]        @relation("PenerimaNotifikasi")
   notifikasiDikirim     Notifikasi[]        @relation("PengirimNotifikasi")
+  
+  // Relasi LMS
+  kuisDibuat            Kuis[]              @relation("PembuatKuis")
+  sesiKuisSiswa         SesiKuisSiswa[]
 
   @@map("pengguna")
 }
@@ -144,6 +148,9 @@ model Sekolah {
   pendaftaranPpdb    PendaftaranPpdb[]
   langgananSekolah   LanggananSekolah[] 
   riwayatPembayaran  RiwayatPembayaran[]
+
+  // Relasi LMS
+  kuis               Kuis[]
 
   @@map("sekolah")
 }
@@ -893,4 +900,99 @@ model HasilSeleksiPpdb {
   pendaftaranPpdb   PendaftaranPpdb @relation(fields: [pendaftaranPpdbId], references: [id])
 
   @@map("hasil_seleksi_ppdb")
+}
+
+// ==========================================
+// 3. LMS TABLES
+// ==========================================
+
+enum TipeSoal {
+  pilihan_ganda
+  esai
+  benar_salah
+}
+
+enum StatusSesiKuis {
+  sedang_mengerjakan
+  selesai
+  dinilai
+}
+
+model Kuis {
+  id             String    @id @default(uuid())
+  judul          String
+  deskripsi      String?   @db.Text
+  durasiMenit    Int       @map("durasi_menit")
+  waktuMulai     DateTime? @map("waktu_mulai") @db.Timestamp()
+  waktuSelesai   DateTime? @map("waktu_selesai") @db.Timestamp()
+  sekolahId      String    @map("sekolah_id")
+  pembuatId      String    @map("pembuat_id")
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+
+  sekolah        Sekolah   @relation(fields: [sekolahId], references: [id], onDelete: Cascade)
+  pembuat        Pengguna  @relation("PembuatKuis", fields: [pembuatId], references: [id], onDelete: Cascade)
+  
+  soal           Soal[]
+  sesiKuisSiswa  SesiKuisSiswa[]
+
+  @@index([sekolahId])
+  @@index([pembuatId])
+  @@map("kuis")
+}
+
+model Soal {
+  id             String    @id @default(uuid())
+  kuisId         String    @map("kuis_id")
+  pertanyaan     String    @db.Text
+  tipeSoal       TipeSoal  @map("tipe_soal")
+  bobotNilai     Float     @default(1.0) @map("bobot_nilai")
+  pilihan        Json?
+  kunciJawaban   String    @map("kunci_jawaban") @db.Text
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+
+  kuis           Kuis      @relation(fields: [kuisId], references: [id], onDelete: Cascade)
+  jawabanSiswa   JawabanSiswa[]
+
+  @@index([kuisId])
+  @@map("soal")
+}
+
+model SesiKuisSiswa {
+  id             String         @id @default(uuid())
+  kuisId         String         @map("kuis_id")
+  siswaId        String         @map("siswa_id")
+  waktuMulai     DateTime       @default(now()) @map("waktu_mulai") @db.Timestamp()
+  waktuSelesai   DateTime?      @map("waktu_selesai") @db.Timestamp()
+  nilaiAkhir     Float?         @map("nilai_akhir")
+  status         StatusSesiKuis @default(sedang_mengerjakan)
+
+  kuis           Kuis           @relation(fields: [kuisId], references: [id], onDelete: Cascade)
+  siswa          Pengguna       @relation(fields: [siswaId], references: [id], onDelete: Cascade)
+  jawabanSiswa   JawabanSiswa[]
+
+  @@unique([kuisId, siswaId])
+  @@index([kuisId])
+  @@index([siswaId])
+  @@map("sesi_kuis_siswa")
+}
+
+model JawabanSiswa {
+  id               String    @id @default(uuid())
+  sesiKuisSiswaId  String    @map("sesi_kuis_siswa_id")
+  soalId           String    @map("soal_id")
+  jawaban          String    @db.Text
+  nilaiDiperoleh   Float?    @map("nilai_diperoleh")
+  catatanGuru      String?   @map("catatan_guru") @db.Text
+  dibuatPada       DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada   DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+
+  sesiKuisSiswa    SesiKuisSiswa @relation(fields: [sesiKuisSiswaId], references: [id], onDelete: Cascade)
+  soal             Soal          @relation(fields: [soalId], references: [id], onDelete: Cascade)
+
+  @@unique([sesiKuisSiswaId, soalId])
+  @@index([sesiKuisSiswaId])
+  @@index([soalId])
+  @@map("jawaban_siswa")
 }
