@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import { prisma } from "../config/db";
 import {
   registerSchema,
@@ -13,9 +12,7 @@ import {
 import { generateOtp } from "../utils/generateOtp";
 import { sendOtpEmail } from "../utils/email";
 import { AppError } from "../utils/appError";
-
-const JWT_SECRET = process.env.JWT_SECRET || "default_secret";
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "3h";
+import { generateAccessToken } from "../utils/generateToken";
 
 export const register = async (req: Request, res: Response) => {
   const data = registerSchema.parse(req.body);
@@ -37,7 +34,6 @@ export const register = async (req: Request, res: Response) => {
   const otpTimeout = new Date(Date.now() + 5 * 60 * 1000); // 5 menit
 
   if (existingUser && existingUser.status === "menunggu_verifikasi") {
-    // Update data pengguna yang belum terverifikasi
     await prisma.pengguna.update({
       where: { id: existingUser.id },
       data: {
@@ -48,7 +44,6 @@ export const register = async (req: Request, res: Response) => {
       },
     });
   } else {
-    // Buat pengguna baru
     await prisma.pengguna.create({
       data: {
         email: data.email,
@@ -97,7 +92,6 @@ export const verifyRegister = async (req: Request, res: Response) => {
     throw new AppError("Kode OTP sudah kedaluwarsa", 400);
   }
 
-  // Update status jadi aktif dan hapus OTP
   await prisma.pengguna.update({
     where: { id: user.id },
     data: {
@@ -107,8 +101,12 @@ export const verifyRegister = async (req: Request, res: Response) => {
     },
   });
 
-  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN as any,
+  // Gunakan generateAccessToken agar payload sesuai (userId)
+  const token = generateAccessToken({
+    userId: user.id,
+    email: user.email,
+    roleId: user.peranId || undefined,
+    sekolahId: user.sekolahId || undefined,
   });
 
   res.status(200).json({
@@ -193,8 +191,12 @@ export const verifyLogin = async (req: Request, res: Response) => {
     },
   });
 
-  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN as any,
+  // Gunakan generateAccessToken agar payload sesuai (userId)
+  const token = generateAccessToken({
+    userId: user.id,
+    email: user.email,
+    roleId: user.peranId || undefined,
+    sekolahId: user.sekolahId || undefined,
   });
 
   res.status(200).json({
@@ -204,7 +206,6 @@ export const verifyLogin = async (req: Request, res: Response) => {
   });
 };
 
-//forgot password
 export const forgotPassword = async (req: Request, res: Response) => {
   const data = forgotPasswordSchema.parse(req.body);
 
@@ -274,5 +275,5 @@ export const resetPassword = async (req: Request, res: Response) => {
   res.status(200).json({
     success: true,
     message: "Reset password berhasil",
-  })
-}
+  });
+};

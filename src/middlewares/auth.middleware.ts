@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken, TokenPayLoad } from "../utils/generateToken";
-import { success } from "zod";
 
 export interface AuthRequest extends Request {
     user?: TokenPayLoad;
@@ -23,7 +22,7 @@ export const authenticate = (
         if (!authHeader.startsWith("Bearer ")) {
             return res.status(401).json({
                 success: false,
-                message: "format token harus <token>",
+                message: "Format token harus Bearer <token>",
             });
         }
 
@@ -32,7 +31,7 @@ export const authenticate = (
         if (!token) {
             return res.status(401).json({
                 success: false,
-                message: "token tidak ditemukan",
+                message: "Token tidak ditemukan",
             });
         }
 

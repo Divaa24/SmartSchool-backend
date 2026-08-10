@@ -1,11 +1,11 @@
 import jwt from "jsonwebtoken";
 
-export interface TokenPayLoad{
-    userId: string,
-    email: string,
-    roleId: string,
-    role: string,
-    sekolahId: string
+export interface TokenPayLoad {
+    userId: string;
+    email: string;
+    roleId?: string;
+    role?: string;
+    sekolahId?: string;
 }
 
 export interface RefreshPayLoad {
