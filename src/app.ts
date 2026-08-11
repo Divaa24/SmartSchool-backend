@@ -12,6 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 
 import authRoutes from "./routes/auth.routes";
 import tenantRoutes from "./routes/tenant.routes";
+import webhookRoutes from "./routes/webhook.routes";
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
@@ -24,6 +25,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/v1/langganan/sekolah", subscriptionRoutes);
 app.use("/api/v1/tenant", tenantRoutes);
+app.use("/api/v1/webhooks", webhookRoutes);
 
 app.use(globalErrorHandler);
 
