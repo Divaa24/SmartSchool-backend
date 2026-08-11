@@ -60,57 +60,25 @@ export const registerTenant = async (
 
     // Generate username dari email
     let baseUsername = validatedData.email.split("@")[0] || validatedData.email;
-    
-    // Gunakan prisma.$transaction
-    await prisma.$transaction(async (tx) => {
-      // Pastikan namaPengguna unik dalam transaksi
-      let finalUsername = baseUsername;
-      let userWithUsername = await tx.pengguna.findUnique({
-        where: { namaPengguna: finalUsername },
-      });
-      if (userWithUsername) {
-        finalUsername = `${baseUsername}${crypto.randomInt(100, 999)}`;
-      }
-
-      // Buat Sekolah baru
-      const sekolah = await tx.sekolah.create({
-        data: {
-          nama: validatedData.namaSekolah,
-          subdomain: validatedData.subdomain,
-          kode: kodeSekolah,
-          alamat: validatedData.alamatSekolah,
-          telepon: validatedData.teleponSekolah,
-          logo: validatedData.logo ?? null,
-          konfigurasi: {
-            jenjang: validatedData.jenjang,
-          },
-        },
-      });
-
-      // Buat LanggananSekolah
-      await tx.langgananSekolah.create({
-        data: {
-          sekolahId: sekolah.id,
-          paketId: validatedData.paketId,
-          statusLangganan: "menunggu_pembayaran", // status default
-        },
-      });
-
-      // Buat Pengguna baru sebagai Admin
-      await tx.pengguna.create({
-        data: {
-          email: validatedData.email,
-          namaPengguna: finalUsername,
-          kataSandi: hashedPassword,
-          namaLengkap: validatedData.nama,
-          status: "menunggu_verifikasi",
-          kodeOtp: otp,
-          sekolahId: sekolah.id,
-          peranId: peran.id,
-          otpTimeout: new Date(Date.now() + 5 * 60 * 1000), // OTP berlaku 5 menit
-        },
-      });
+    // Gunakan prisma.$transaction dihapus, kita simpan di PendaftaranSekolah
+    await prisma.pendaftaranSekolah.create({
+      data: {
+        nama: validatedData.nama,
+        email: validatedData.email,
+        kataSandi: hashedPassword,
+        namaSekolah: validatedData.namaSekolah,
+        jenjang: validatedData.jenjang,
+        subdomain: validatedData.subdomain,
+        alamatSekolah: validatedData.alamatSekolah,
+        teleponSekolah: validatedData.teleponSekolah,
+        logo: validatedData.logo ?? null,
+        paketId: validatedData.paketId,
+        kodeOtp: otp,
+        otpTimeout: new Date(Date.now() + 5 * 60 * 1000), // OTP berlaku 5 menit
+        status: "menunggu_verifikasi",
+      },
     });
+
 
     // Panggil sendOtpEmail (setelah transaksi berhasil)
     await sendOtpEmail({

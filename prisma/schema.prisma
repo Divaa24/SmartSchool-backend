@@ -272,7 +272,7 @@ model LanggananSekolah {
   dibuatPada            DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
   diperbaruiPada        DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
 
-  sekolah           Sekolah             @relation(fields: [sekolahId], references: [id])
+  sekolah           Sekolah?            @relation(fields: [sekolahId], references: [id])
   paket             Paket               @relation(fields: [paketId], references: [id])
   riwayatPembayaran RiwayatPembayaran[]
 
@@ -295,7 +295,7 @@ model RiwayatPembayaran {
   dibuatPada            DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
 
   langgananSekolah LanggananSekolah @relation(fields: [langgananSekolahId], references: [id])
-  sekolah          Sekolah          @relation(fields: [sekolahId], references: [id])
+  sekolah          Sekolah?          @relation(fields: [sekolahId], references: [id])
 
   @@map("riwayat_pembayaran")
 }
@@ -995,4 +995,26 @@ model JawabanSiswa {
   @@index([sesiKuisSiswaId])
   @@index([soalId])
   @@map("jawaban_siswa")
+}
+
+model PendaftaranSekolah {
+  id              String    @id @default(uuid())
+  nama            String
+  email           String
+  kataSandi       String    @map("kata_sandi")
+  namaSekolah     String    @map("nama_sekolah")
+  jenjang         String
+  subdomain       String
+  alamatSekolah   String    @map("alamat_sekolah")
+  teleponSekolah  String    @map("telepon_sekolah")
+  logo            String?
+  paketId         String    @map("paket_id")
+  kodeOtp         String?   @map("kode_otp")
+  otpTimeout      DateTime? @map("otp_timeout")
+  status          String    @default("menunggu_verifikasi")
+  midtransOrderId String?   @map("midtrans_order_id")
+  dibuatPada      DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada  DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+
+  @@map("pendaftaran_sekolah")
 }
