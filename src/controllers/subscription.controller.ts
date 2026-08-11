@@ -26,7 +26,12 @@ export const createPayment = async (
       where: { id: data.paketId },
     });
 
-    if (!paket) throw new AppError("Paket langganan tidak ditemukan", 404);
+    if (!paket) {
+      throw new AppError(
+        "Paket langganan tidak ditemukan",
+        404,
+      );
+    }
 
     // Hitung total harga (jika annual, asumsikan dikali 12)
     const totalHarga =
@@ -34,69 +39,97 @@ export const createPayment = async (
         ? Number(paket.harga) * 12
         : Number(paket.harga);
 
-    // 3. Persiapkan API Call ke Xendit
+    // 3. Persiapkan API Call ke Midtrans
     // Ambil nama lengkap dari database karena di Token hanya ada userId
     const pengguna = await prisma.pengguna.findUnique({
       where: { id: req.user.userId },
       select: { namaLengkap: true },
     });
-    const namaCustomer = pengguna?.namaLengkap || "Admin Sekolah";
 
-    const xenditAuth = Buffer.from(
-      process.env.XENDIT_SECRET_KEY + ":",
-    ).toString("base64");
-    const externalId = `INV-${req.user.sekolahId}-${Date.now()}`; // Kode unik invoice
+    const namaCustomer =
+      pengguna?.namaLengkap || "Admin Sekolah";
 
-    const xenditResponse = await fetch("https://api.xendit.co/v2/invoices", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${xenditAuth}`,
-      },
-      body: JSON.stringify({
-        external_id: externalId,
-        amount: totalHarga,
-        payer_email: req.user.email,
-        description: `Pembayaran Paket ${paket.nama} (${data.siklusPenagihan}) - SmartSchool`,
-        customer: {
-          given_names: namaCustomer, // Menggunakan nama dari database
-          email: req.user.email,
-        },
-      }),
-    });
-    const invoice = await xenditResponse.json();
-
-    if (!xenditResponse.ok) {
+    if (!process.env.MIDTRANS_SERVER_KEY) {
       throw new AppError(
-        invoice?.message || "Gagal membuat invoice pembayaran",
-        xenditResponse.status,
+        "MIDTRANS_SERVER_KEY belum dikonfigurasi",
+        500,
+      );
+    }
+
+    const orderId = `INV-${req.user.sekolahId}-${Date.now()}`;
+
+    const midtransAuth = Buffer.from(
+      process.env.MIDTRANS_SERVER_KEY + ":",
+    ).toString("base64");
+
+    const midtransResponse = await fetch(
+      "https://app.sandbox.midtrans.com/snap/v1/transactions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${midtransAuth}`,
+        },
+        body: JSON.stringify({
+          transaction_details: {
+            order_id: orderId,
+            gross_amount: totalHarga,
+          },
+
+          customer_details: {
+            first_name: namaCustomer,
+            email: req.user.email,
+          },
+        }),
+      },
+    );
+
+    const transaction = await midtransResponse.json();
+
+    if (!midtransResponse.ok) {
+      throw new AppError(
+        transaction?.error_messages?.join(", ") ||
+          transaction?.status_message ||
+          "Gagal membuat transaksi pembayaran",
+        midtransResponse.status,
       );
     }
 
     // 4. Simpan ke Database (Atomic Transaction)
     await prisma.$transaction(async (tx) => {
-      const langganan = await tx.langgananSekolah.create({
-        data: {
-          sekolahId: req.user!.sekolahId!,
-          paketId: paket.id,
-          dibuatOleh: req.user!.userId,
-          statusPembayaran: "pending",
-          statusLangganan: "trialing", // Status menunggu bayar
-          hargaSaatBerlangganan: totalHarga,
-          siklusPenagihan: data.siklusPenagihan,
-          xenditInvoiceId: invoice.id,
-          xenditPaymentLink: invoice.invoice_url,
-        },
-      });
+      const langganan =
+        await tx.langgananSekolah.create({
+          data: {
+            sekolahId: req.user!.sekolahId!,
+            paketId: paket.id,
+            dibuatOleh: req.user!.userId,
+
+            statusPembayaran: "pending",
+
+            statusLangganan: "trialing",
+
+            hargaSaatBerlangganan: totalHarga,
+
+            siklusPenagihan:
+              data.siklusPenagihan,
+            xenditInvoiceId: orderId,
+
+            xenditPaymentLink:
+              transaction.redirect_url,
+          },
+        });
 
       await tx.riwayatPembayaran.create({
         data: {
           langgananSekolahId: langganan.id,
           sekolahId: req.user!.sekolahId!,
           dibuatOleh: req.user!.userId,
+
           jumlah: totalHarga,
+
           status: "pending",
-          xenditInvoiceId: invoice.id,
+
+          xenditInvoiceId: orderId,
         },
       });
     });
@@ -106,9 +139,54 @@ export const createPayment = async (
       res,
       "Invoice pembayaran berhasil dibuat",
       {
-        invoice_url: invoice.invoice_url,
+        invoice_url: transaction.redirect_url,
       },
       201,
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const getPendingPayments = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.user || !req.user.sekolahId) {
+      throw new AppError(
+        "Akses Ditolak: Anda tidak terhubung dengan sekolah manapun",
+        403,
+      );
+    }
+
+    const pembayaranPending =
+      await prisma.riwayatPembayaran.findMany({
+        where: {
+          sekolahId: req.user.sekolahId,
+          status: "pending",
+        },
+
+        include: {
+          langgananSekolah: {
+            include: {
+              paket: true,
+            },
+          },
+        },
+
+        orderBy: {
+          dibuatPada: "desc",
+        },
+      });
+
+    return successResponse(
+      res,
+      "Berhasil mendapatkan riwayat pembayaran",
+      pembayaranPending,
+      200,
     );
   } catch (error) {
     next(error);
