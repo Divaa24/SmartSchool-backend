@@ -26,7 +26,8 @@ model Pengguna {
   nipd           String?   @db.VarChar(20)
   nip            String?   @db.VarChar(20)
   nuptk          String?   @db.VarChar(20)
-  nisn           String?   @db.VarChar(20)
+  nisn           String?   @unique @db.VarChar(20)
+  nis            String?   @db.VarChar(20)
   jenisKelamin   String?   @map("jenis_kelamin") @db.VarChar(10)
   tempatLahir    String?   @map("tempat_lahir") @db.VarChar(50)
   tanggalLahir   DateTime? @map("tanggal_lahir") @db.Date
@@ -51,7 +52,7 @@ model Pengguna {
   percobaanUjianSiswa   PercobaanUjian[]
   pengumpulanTugasSiswa PengumpulanTugas[]
   pendaftaranPpdb       PendaftaranPpdb[]
-  siswaKelas            SiswaKelas[]
+  kelasSiswa            AnggotaKelas[]     @relation("SiswaKelas")
   notifikasiDiterima    Notifikasi[]       @relation("PenerimaNotifikasi")
   notifikasiDikirim     Notifikasi[]       @relation("PengirimNotifikasi")
 
@@ -299,7 +300,7 @@ model RiwayatPembayaran {
   dibuatPada            DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
 
   langgananSekolah LanggananSekolah @relation(fields: [langgananSekolahId], references: [id])
-  sekolah          Sekolah?          @relation(fields: [sekolahId], references: [id])
+  sekolah          Sekolah?         @relation(fields: [sekolahId], references: [id])
 
   @@map("riwayat_pembayaran")
 }
@@ -330,50 +331,36 @@ model Notifikasi {
 
 model TahunAjaran {
   id             String    @id @default(uuid())
+  nama           String    @db.VarChar(50) // Contoh: "2026/2027"
+  semester       String    @db.VarChar(20) // "Ganjil" atau "Genap"
+  status         String    @default("tidak_aktif") @db.VarChar(20) // "aktif" / "tidak_aktif"
   sekolahId      String    @map("sekolah_id")
-  dibuatOleh     String?   @map("dibuat_oleh")
-  diperbaruiOleh String?   @map("diperbarui_oleh")
-  dihapusOleh    String?   @map("dihapus_oleh")
-  tahunAjaran    String    @map("tahun_ajaran") @db.VarChar(20)
-  semester       String    @db.VarChar(10)
-  tanggalMulai   DateTime? @map("tanggal_mulai") @db.Date
-  tanggalSelesai DateTime? @map("tanggal_selesai") @db.Date
-  status         String?   @db.VarChar(20)
-  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
-  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
-
-  sekolah    Sekolah      @relation(fields: [sekolahId], references: [id])
-  kelas      Kelas[]
-  siswaKelas SiswaKelas[]
+  sekolah        Sekolah   @relation(fields: [sekolahId], references: [id])
+  kelas          Kelas[]
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada")
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada")
+  dihapusPada    DateTime? @map("dihapus_pada")
 
   @@map("tahun_ajaran")
 }
 
 model Kelas {
-  id             String    @id @default(uuid())
-  sekolahId      String    @map("sekolah_id")
-  tahunAjaranId  String    @map("tahun_ajaran_id")
-  waliKelasId    String?   @map("wali_kelas_id")
-  dibuatOleh     String?   @map("dibuat_oleh")
-  diperbaruiOleh String?   @map("diperbarui_oleh")
-  dihapusOleh    String?   @map("dihapus_oleh")
-  nama           String    @db.VarChar(50)
-  tingkat        String    @db.VarChar(20)
-  ruangan        String?   @db.VarChar(20)
-  kapasitas      Int?
-  status         String?   @db.VarChar(20)
-  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
-  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
-
-  sekolah     Sekolah     @relation(fields: [sekolahId], references: [id])
-  tahunAjaran TahunAjaran @relation(fields: [tahunAjaranId], references: [id])
-  waliKelas   Pengguna?   @relation("WaliKelas", fields: [waliKelasId], references: [id])
+  id             String         @id @default(uuid())
+  nama           String         @db.VarChar(50) // Contoh: "X IPA 1"
+  tingkat        Int
+  sekolahId      String         @map("sekolah_id")
+  sekolah        Sekolah        @relation(fields: [sekolahId], references: [id])
+  waliKelasId    String?        @map("wali_kelas_id")
+  waliKelas      Pengguna?      @relation("WaliKelas", fields: [waliKelasId], references: [id])
+  tahunAjaranId  String         @map("tahun_ajaran_id")
+  tahunAjaran    TahunAjaran    @relation(fields: [tahunAjaranId], references: [id])
+  anggota        AnggotaKelas[]
+  dibuatPada     DateTime       @default(now()) @map("dibuat_pada")
+  diperbaruiPada DateTime       @updatedAt @map("diperbarui_pada")
+  dihapusPada    DateTime?      @map("dihapus_pada")
 
   kelasMapel KelasMapel[]
   absensi    Absensi[]
-  siswaKelas SiswaKelas[]
 
   @@map("kelas")
 }
@@ -422,24 +409,16 @@ model KelasMapel {
   @@map("kelas_mapel")
 }
 
-model SiswaKelas {
-  id             String    @id @default(uuid())
-  kelasId        String    @map("kelas_id")
-  penggunaId     String    @map("pengguna_id")
-  tahunAjaranId  String    @map("tahun_ajaran_id")
-  dibuatOleh     String?   @map("dibuat_oleh")
-  diperbaruiOleh String?   @map("diperbarui_oleh")
-  dihapusOleh    String?   @map("dihapus_oleh")
-  status         String?   @db.VarChar(20)
-  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
-  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+model AnggotaKelas {
+  id         String   @id @default(uuid())
+  kelasId    String   @map("kelas_id")
+  kelas      Kelas    @relation(fields: [kelasId], references: [id])
+  siswaId    String   @map("siswa_id")
+  siswa      Pengguna @relation("SiswaKelas", fields: [siswaId], references: [id])
+  dibuatPada DateTime @default(now()) @map("dibuat_pada")
 
-  kelas       Kelas       @relation(fields: [kelasId], references: [id])
-  pengguna    Pengguna    @relation(fields: [penggunaId], references: [id])
-  tahunAjaran TahunAjaran @relation(fields: [tahunAjaranId], references: [id])
-
-  @@map("siswa_kelas")
+  @@unique([kelasId, siswaId])
+  @@map("anggota_kelas")
 }
 
 model KomponenNilai {

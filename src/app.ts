@@ -4,6 +4,8 @@ import { globalErrorHandler } from "./middlewares/error.middleware";
 import userRoutes from "./routes/user.routes";
 import subscriptionRoutes from "./routes/subscription.routes";
 import paketRoutes from "./routes/paket.routes";
+import akademikRoutes from "./routes/akademik.routes";
+import siswaRoutes from "./routes/siswa.routes";
 
 const app: Application = express();
 
@@ -28,6 +30,8 @@ app.use("/api/v1/langganan/sekolah", subscriptionRoutes);
 app.use("/api/v1/tenant", tenantRoutes);
 app.use("/api/v1/webhooks", webhookRoutes);
 app.use("/api/v1/paket", paketRoutes);
+app.use("/api/v1/akademik", akademikRoutes);
+app.use("/api/v1/siswa", siswaRoutes);
 
 app.use(globalErrorHandler);
 
