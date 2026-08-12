@@ -5,15 +5,9 @@ import { prisma } from "../config/db";
 export const handleMidtransWebhook = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { 
-      order_id, 
-      status_code, 
-      gross_amount, 
-      signature_key, 
-      transaction_status, 
-      transaction_id 
+      order_id, status_code, gross_amount, signature_key, transaction_status, transaction_id 
     } = req.body;
     
-    // 1. Verifikasi Signature Key Midtrans agar tidak bisa diretas
     const serverKey = process.env.MIDTRANS_SERVER_KEY || "";
     const hash = crypto.createHash("sha512").update(order_id + status_code + gross_amount + serverKey).digest("hex");
     
@@ -21,64 +15,132 @@ export const handleMidtransWebhook = async (req: Request, res: Response, next: N
       return res.status(403).json({ success: false, message: "Invalid Signature Key" });
     }
 
-    // 2. Cari riwayat pembayaran di database
-    const riwayat = await prisma.riwayatPembayaran.findFirst({
-      where: { midtransOrderId: order_id },
-      include: { langgananSekolah: true }
-    });
+    if (order_id.startsWith("REG-")) {
+      const pendaftaran = await prisma.pendaftaranSekolah.findFirst({
+        where: { midtransOrderId: order_id }
+      });
 
-    if (!riwayat) {
-      return res.status(404).json({ success: false, message: "Order ID not found" });
-    }
+      if (!pendaftaran) return res.status(404).json({ success: false, message: "Pendaftaran not found" });
 
-    // 3. Update database secara atomik
-    await prisma.$transaction(async (tx) => {
-      // Jika pembayaran Sukses
       if (transaction_status === "capture" || transaction_status === "settlement") {
-        await tx.riwayatPembayaran.update({
-          where: { id: riwayat.id },
-          data: { status: "success", midtransTransactionId: transaction_id, webhookRawPayload: req.body }
-        });
+        const peranAdmin = await prisma.peran.findUnique({ where: { nama: "admin_sekolah" } });
+        const randomChars = crypto.randomBytes(3).toString("hex").toUpperCase();
+        const kodeSekolah = `SCH-${randomChars}`;
+        const baseUsername = pendaftaran.email.split("@")[0] || pendaftaran.email;
 
-        const startDate = new Date();
-        const endDate = new Date();
-        if (riwayat.langgananSekolah.siklusPenagihan === "annual") {
+        await prisma.$transaction(async (tx) => {
+          const sekolah = await tx.sekolah.create({
+            data: {
+              nama: pendaftaran.namaSekolah,
+              subdomain: pendaftaran.subdomain,
+              kode: kodeSekolah,
+              alamat: pendaftaran.alamatSekolah,
+              telepon: pendaftaran.teleponSekolah,
+              email: pendaftaran.email,
+              logo: pendaftaran.logo,
+              yayasanId: pendaftaran.yayasanId,
+              status: "aktif",
+              konfigurasi: { jenjang: pendaftaran.jenjang }
+            }
+          });
+
+          const pengguna = await tx.pengguna.create({
+            data: {
+              namaPengguna: `${baseUsername}_${randomChars.toLowerCase()}`,
+              email: pendaftaran.email,
+              kataSandi: pendaftaran.kataSandi,
+              namaLengkap: pendaftaran.nama,
+              sekolahId: sekolah.id,
+              peranId: peranAdmin!.id,
+              status: "aktif"
+            }
+          });
+
+          const endDate = new Date();
           endDate.setFullYear(endDate.getFullYear() + 1);
-        } else {
-          endDate.setMonth(endDate.getMonth() + 1);
-        }
 
-        await tx.langgananSekolah.update({
-          where: { id: riwayat.langgananSekolah.id },
-          data: {
-            statusPembayaran: "success",
-            statusLangganan: "active",
-            tanggalMulai: startDate,
-            tanggalBerakhir: endDate
-          }
-        });
+          await tx.langgananSekolah.create({
+            data: {
+              sekolahId: sekolah.id,
+              paketId: pendaftaran.paketId,
+              dibuatOleh: pengguna.id,
+              statusPembayaran: "success",
+              statusLangganan: "active",
+              hargaSaatBerlangganan: gross_amount,
+              siklusPenagihan: "annual",
+              midtransOrderId: order_id,
+              tanggalMulai: new Date(),
+              tanggalBerakhir: endDate
+            }
+          });
 
-        await tx.sekolah.update({
-          where: { id: riwayat.sekolahId },
-          data: { status: "aktif" }
+          await tx.pendaftaranSekolah.update({
+            where: { id: pendaftaran.id },
+            data: { status: "selesai" }
+          });
         });
-      } 
-      // Jika pembayaran Gagal/Kedaluwarsa/Batal
-      else if (transaction_status === "cancel" || transaction_status === "deny" || transaction_status === "expire") {
-        await tx.riwayatPembayaran.update({
-          where: { id: riwayat.id },
-          data: { status: "failed", midtransTransactionId: transaction_id, webhookRawPayload: req.body }
-        });
-
-        await tx.langgananSekolah.update({
-          where: { id: riwayat.langgananSekolah.id },
-          data: { statusPembayaran: "expired" }
+      } else if (transaction_status === "cancel" || transaction_status === "deny" || transaction_status === "expire") {
+        await prisma.pendaftaranSekolah.update({
+          where: { id: pendaftaran.id },
+          data: { status: "pembayaran_gagal" }
         });
       }
-    });
+      return res.status(200).json({ received: true });
+    }
 
-    // 4. Balas dengan HTTP 200 OK agar Midtrans tahu webhook sudah diterima
-    return res.status(200).json({ received: true });
+    if (order_id.startsWith("INV-")) {
+      const riwayat = await prisma.riwayatPembayaran.findFirst({
+        where: { midtransOrderId: order_id },
+        include: { langgananSekolah: true }
+      });
+
+      if (!riwayat) return res.status(404).json({ success: false, message: "Order ID not found" });
+
+      await prisma.$transaction(async (tx) => {
+        if (transaction_status === "capture" || transaction_status === "settlement") {
+          await tx.riwayatPembayaran.update({
+            where: { id: riwayat.id },
+            data: { status: "success", midtransTransactionId: transaction_id, webhookRawPayload: req.body }
+          });
+
+          const startDate = new Date();
+          const endDate = new Date();
+          if (riwayat.langgananSekolah.siklusPenagihan === "annual") {
+            endDate.setFullYear(endDate.getFullYear() + 1);
+          } else {
+            endDate.setMonth(endDate.getMonth() + 1);
+          }
+
+          await tx.langgananSekolah.update({
+            where: { id: riwayat.langgananSekolah.id },
+            data: {
+              statusPembayaran: "success",
+              statusLangganan: "active",
+              tanggalMulai: startDate,
+              tanggalBerakhir: endDate
+            }
+          });
+
+          await tx.sekolah.update({
+            where: { id: riwayat.sekolahId! },
+            data: { status: "aktif" }
+          });
+        } else if (transaction_status === "cancel" || transaction_status === "deny" || transaction_status === "expire") {
+          await tx.riwayatPembayaran.update({
+            where: { id: riwayat.id },
+            data: { status: "failed", midtransTransactionId: transaction_id, webhookRawPayload: req.body }
+          });
+
+          await tx.langgananSekolah.update({
+            where: { id: riwayat.langgananSekolah.id },
+            data: { statusPembayaran: "expired" }
+          });
+        }
+      });
+      return res.status(200).json({ received: true });
+    }
+
+    return res.status(400).json({ success: false, message: "Format Order ID tidak dikenali" });
   } catch (error) {
     console.error("Midtrans Webhook Error:", error);
     return res.status(500).json({ success: false, message: "Internal server error" });

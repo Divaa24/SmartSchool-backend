@@ -6,6 +6,7 @@ export interface TokenPayLoad {
     roleId?: string;
     role?: string;
     sekolahId?: string;
+    yayasanId?: string;
 }
 
 export interface RefreshPayLoad {

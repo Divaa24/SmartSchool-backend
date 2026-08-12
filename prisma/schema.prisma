@@ -13,6 +13,7 @@ datasource db {
 model Pengguna {
   id             String    @id @default(uuid())
   sekolahId      String?   @map("sekolah_id")
+  yayasanId      String?   @map("yayasan_id")
   peranId        String?   @map("peran_id")
   dibuatOleh     String?   @map("dibuat_oleh")
   diperbaruiOleh String?   @map("diperbarui_oleh")
@@ -40,6 +41,7 @@ model Pengguna {
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
   sekolah Sekolah? @relation(fields: [sekolahId], references: [id])
+  yayasan Yayasan? @relation(fields: [yayasanId], references: [id])
   peran   Peran?   @relation(fields: [peranId], references: [id])
 
   kelasWali             Kelas[]            @relation("WaliKelas")
@@ -164,12 +166,14 @@ model Yayasan {
   alamat         String?   @db.Text
   telepon        String?   @db.VarChar(20)
   email          String?   @db.VarChar(100)
+  npyp           String?   @unique @db.VarChar(50)
   status         String?   @db.VarChar(20)
   dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
-  sekolah Sekolah[]
+  sekolah  Sekolah[]
+  pengguna Pengguna[]
 
   @@map("yayasan")
 }
@@ -1009,6 +1013,7 @@ model PendaftaranSekolah {
   teleponSekolah  String    @map("telepon_sekolah")
   logo            String?
   paketId         String    @map("paket_id")
+  yayasanId       String?   @map("yayasan_id")
   kodeOtp         String?   @map("kode_otp")
   otpTimeout      DateTime? @map("otp_timeout")
   status          String    @default("menunggu_verifikasi")
