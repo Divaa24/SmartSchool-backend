@@ -23,6 +23,11 @@ export const authorizeRoles = (...allowedRoles: string[]) => {
         select: { nama: true },
       });
 
+      console.log("ROLE DEBUG:");
+      console.log("roleId dari token:", req.user.roleId);
+      console.log("role dari database:", userRole?.nama);
+      console.log("role yang diizinkan:", allowedRoles);
+
       if (!userRole || !allowedRoles.includes(userRole.nama)) {
         return res.status(403).json({
           success: false,

@@ -118,27 +118,29 @@ model PeranIzin {
 }
 
 model Sekolah {
-  id               String    @id @default(uuid())
-  yayasanId        String?   @map("yayasan_id")
-  langgananAktifId String?   @map("langganan_aktif_id")
-  dibuatOleh       String?   @map("dibuat_oleh")
-  diperbaruiOleh   String?   @map("diperbarui_oleh")
-  dihapusOleh      String?   @map("dihapus_oleh")
-  nama             String    @db.VarChar(100)
-  subdomain        String    @unique @db.VarChar(50)
-  kode             String    @unique @db.VarChar(20)
-  alamat           String?   @db.Text
-  telepon          String?   @db.VarChar(20)
-  email            String?   @db.VarChar(100)
-  logo             String?   @db.VarChar(255)
-  status           String?   @db.VarChar(20)
-  konfigurasi      Json?
-  dibuatPada       DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada   DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
-  dihapusPada      DateTime? @map("dihapus_pada") @db.Timestamp()
+  id               String  @id @default(uuid())
+  yayasanId        String? @map("yayasan_id")
+  langgananAktifId String? @map("langganan_aktif_id")
+  dibuatOleh       String? @map("dibuat_oleh")
+  diperbaruiOleh   String? @map("diperbarui_oleh")
+  dihapusOleh      String? @map("dihapus_oleh")
+  nama             String  @db.VarChar(100)
+  subdomain        String  @unique @db.VarChar(50)
+  kode             String  @unique @db.VarChar(20)
+
+  jenjang         String    @db.VarChar(20)
+
+  alamat         String?   @db.Text
+  telepon        String?   @db.VarChar(20)
+  email          String?   @db.VarChar(100)
+  logo           String?   @db.VarChar(255)
+  status         String?   @db.VarChar(20)
+  konfigurasi    Json?
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
   yayasan           Yayasan?            @relation(fields: [yayasanId], references: [id])
-  // Relasi langganan di-handle melalui model LanggananSekolah
   pengguna          Pengguna[]
   tahunAjaran       TahunAjaran[]
   kelas             Kelas[]

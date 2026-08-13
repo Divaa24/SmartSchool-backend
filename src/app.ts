@@ -6,6 +6,10 @@ import subscriptionRoutes from "./routes/subscription.routes";
 import paketRoutes from "./routes/paket.routes";
 import akademikRoutes from "./routes/akademik.routes";
 import siswaRoutes from "./routes/siswa.routes";
+import tahunAjaranRoutes from "./routes/tahunAjaran.routes";
+import kelasRoutes from "./routes/kelas.routes";
+import mataPelajaranRoutes from "./routes/mataPelajaran";
+import kelasMapelRoutes from "./routes/kelasMapel.routes";
 
 const app: Application = express();
 
@@ -32,6 +36,10 @@ app.use("/api/v1/webhooks", webhookRoutes);
 app.use("/api/v1/paket", paketRoutes);
 app.use("/api/v1/akademik", akademikRoutes);
 app.use("/api/v1/siswa", siswaRoutes);
+app.use("/api/tahun-ajaran", tahunAjaranRoutes);
+app.use("/api/kelas", kelasRoutes);
+app.use("/api/mata-pelajaran", mataPelajaranRoutes);
+app.use("/api/kelas-mapel", kelasMapelRoutes);
 
 app.use(globalErrorHandler);
 
