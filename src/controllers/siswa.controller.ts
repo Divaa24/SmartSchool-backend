@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../config/db";
 import { AppError } from "../utils/appError";
-import { siswaSchema } from "../validations/akademik.validation";
+import { siswaSchema } from "../validations/siswa.validation";
 import bcrypt from "bcrypt";
 
 export const createSiswa = async (req: Request, res: Response, next: NextFunction) => {

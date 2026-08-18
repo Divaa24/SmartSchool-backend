@@ -123,6 +123,7 @@ export const verifyAndPay = async (req: Request, res: Response, next: NextFuncti
             logo: pendaftaran.logo,
             yayasanId: pendaftaran.yayasanId,
             status: "uji coba",
+            jenjang: pendaftaran.jenjang,
             konfigurasi: { jenjang: pendaftaran.jenjang }
           }
         });

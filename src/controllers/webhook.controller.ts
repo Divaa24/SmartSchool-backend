@@ -40,6 +40,7 @@ export const handleMidtransWebhook = async (req: Request, res: Response, next: N
               logo: pendaftaran.logo,
               yayasanId: pendaftaran.yayasanId,
               status: "aktif",
+              jenjang: pendaftaran.jenjang,
               konfigurasi: { jenjang: pendaftaran.jenjang }
             }
           });
