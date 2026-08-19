@@ -12,6 +12,8 @@ import tahunAjaranRoutes from "./routes/tahunAjaran.routes";
 import kelasRoutes from "./routes/kelas.routes";
 import mataPelajaranRoutes from "./routes/mataPelajaran";
 import kelasMapelRoutes from "./routes/kelasMapel.routes";
+import jadwalMengajar  from "./routes/jadwalMengajar.routes";
+import materiPembelajaran from "./routes/materiPembelajaran.routes"
 
 const app: Application = express();
 
@@ -22,6 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 import authRoutes from "./routes/auth.routes";
 import tenantRoutes from "./routes/tenant.routes";
 import webhookRoutes from "./routes/webhook.routes";
+import path from "path";
 
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({
@@ -44,6 +47,9 @@ app.use("/api/tahun-ajaran", tahunAjaranRoutes);
 app.use("/api/kelas", kelasRoutes);
 app.use("/api/mata-pelajaran", mataPelajaranRoutes);
 app.use("/api/kelas-mapel", kelasMapelRoutes);
+app.use("/api/v1/jadwal-mengajar", jadwalMengajar);
+app.use("/api/v1/materi-pembelajaran", materiPembelajaran);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use(globalErrorHandler);
 

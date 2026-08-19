@@ -128,7 +128,7 @@ model Sekolah {
   subdomain        String  @unique @db.VarChar(50)
   kode             String  @unique @db.VarChar(20)
 
-  jenjang         String    @db.VarChar(20)
+  jenjang String @db.VarChar(20)
 
   alamat         String?   @db.Text
   telepon        String?   @db.VarChar(20)
@@ -407,6 +407,7 @@ model KelasMapel {
   ujian              Ujian[]
   tugas              Tugas[]
   materiPembelajaran MateriPembelajaran[]
+  jadwalMengajar     JadwalMengajar[]
 
   @@map("kelas_mapel")
 }
@@ -631,20 +632,26 @@ model PengumpulanTugas {
 }
 
 model MateriPembelajaran {
-  id             String   @id @default(uuid())
-  kelasMapelId   String   @map("kelas_mapel_id")
-  dibuatOleh     String?  @map("dibuat_oleh")
-  diperbaruiOleh String?  @map("diperbarui_oleh")
-  dihapusOleh    String?  @map("dihapus_oleh")
-  judul          String   @db.VarChar(100)
-  deskripsi      String?  @db.Text
-  urlFile        String?  @map("url_file") @db.VarChar(255)
-  kategori       String?  @db.VarChar(50)
-  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  id             String  @id @default(uuid())
+  kelasMapelId   String  @map("kelas_mapel_id")
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
+
+  judul     String  @db.VarChar(100)
+  deskripsi String? @db.Text
+  urlFile   String? @map("url_file") @db.VarChar(255)
+  urlLink   String? @map("url_link") @db.VarChar(255)
+  tipe      String? @db.VarChar(20)
+  kategori  String? @db.VarChar(50)
+
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
   kelasMapel KelasMapel @relation(fields: [kelasMapelId], references: [id])
 
+  @@index([kelasMapelId])
   @@map("materi_pembelajaran")
 }
 
@@ -1003,4 +1010,27 @@ model PendaftaranSekolah {
   diperbaruiPada  DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
 
   @@map("pendaftaran_sekolah")
+}
+
+model JadwalMengajar {
+  id           String  @id @default(uuid())
+  kelasMapelId String  @map("kelas_mapel_id")
+  hari         String  @db.VarChar(20)
+  jamMulai     String  @map("jam_mulai") @db.VarChar(5)
+  jamSelesai   String  @map("jam_selesai") @db.VarChar(5)
+  ruangan      String? @db.VarChar(100)
+
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
+
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  kelasMapel KelasMapel @relation(fields: [kelasMapelId], references: [id])
+
+  @@index([kelasMapelId])
+  @@index([hari])
+  @@map("jadwal_mengajar")
 }
