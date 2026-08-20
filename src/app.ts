@@ -13,7 +13,10 @@ import kelasRoutes from "./routes/kelas.routes";
 import mataPelajaranRoutes from "./routes/mataPelajaran";
 import kelasMapelRoutes from "./routes/kelasMapel.routes";
 import jadwalMengajar  from "./routes/jadwalMengajar.routes";
-import materiPembelajaran from "./routes/materiPembelajaran.routes"
+import materiPembelajaran from "./routes/materiPembelajaran.routes";
+import tugasRoutes from "./routes/tugas.routes";
+import notifikasiRoutes from "./routes/notifikasi.routes";
+import { triggerDeadlineH1Notification } from "./controllers/notifikasi.controller";
 
 const app: Application = express();
 
@@ -50,6 +53,15 @@ app.use("/api/kelas-mapel", kelasMapelRoutes);
 app.use("/api/v1/jadwal-mengajar", jadwalMengajar);
 app.use("/api/v1/materi-pembelajaran", materiPembelajaran);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/api/v1/tugas", tugasRoutes);
+app.use("/api/v1/notifikasi", notifikasiRoutes);
+
+setInterval(
+  () => {
+    triggerDeadlineH1Notification().catch(console.error);
+  },
+  30 * 60 * 1000,
+);
 
 app.use(globalErrorHandler);
 

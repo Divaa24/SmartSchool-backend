@@ -606,8 +606,10 @@ model Tugas {
   batasWaktu     DateTime? @map("batas_waktu") @db.Timestamp()
   dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
   kelasMapel KelasMapel @relation(fields: [kelasMapelId], references: [id])
+  pengumpulanTugasSiswa PengumpulanTugas[]
 
   @@map("tugas")
 }
@@ -627,6 +629,7 @@ model PengumpulanTugas {
   diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
 
   pengguna Pengguna @relation(fields: [penggunaId], references: [id])
+  tugas    Tugas    @relation(fields: [tugasId], references: [id])
 
   @@map("pengumpulan_tugas")
 }
