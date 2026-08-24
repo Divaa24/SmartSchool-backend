@@ -1,12 +1,10 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
 import { TokenPayLoad } from "../utils/generateToken";
+import { prisma } from "../config/db";
 
 interface AuthRequest extends Request {
     user?: TokenPayLoad;
 }
-
-const prisma = new PrismaClient();
 
 const jadwalInclude = {
   kelasMapel: {

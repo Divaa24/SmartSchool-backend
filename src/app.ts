@@ -19,6 +19,7 @@ import notifikasiRoutes from "./routes/notifikasi.routes";
 import { triggerDeadlineH1Notification } from "./controllers/notifikasi.controller";
 import absensiRoutes from "./routes/absensi.routes";
 import soalUjianRoutes from "./routes/soalUjian.routes";
+import ujianRoutes from "./routes/ujian.routes";
 
 const app: Application = express();
 
@@ -57,6 +58,9 @@ app.use("/api/v1/materi-pembelajaran", materiPembelajaran);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/api/v1/tugas", tugasRoutes);
 app.use("/api/v1/notifikasi", notifikasiRoutes);
+app.use("/api/v1/absensi", absensiRoutes);
+app.use("/api/v1/soal-ujian", soalUjianRoutes);
+app.use("/api/v1/ujian", ujianRoutes);
 
 setInterval(
   () => {
@@ -66,8 +70,5 @@ setInterval(
 );
 
 app.use(globalErrorHandler);
-
-app.use("/api/v1/absensi", absensiRoutes);
-app.use("/api/v1/soal-ujian", soalUjianRoutes);
 
 export default app;
