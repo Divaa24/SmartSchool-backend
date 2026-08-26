@@ -5,7 +5,6 @@ import {
   registerSchema,
   verifySchema,
   loginSchema,
-  verifyLoginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
 } from "../validations/auth.validation";
@@ -14,6 +13,7 @@ import { sendOtpEmail } from "../utils/email";
 import { AppError } from "../utils/appError";
 import { generateAccessToken } from "../utils/generateToken";
 
+// === REGISTRASI (Tetap pakai OTP untuk verifikasi email pertama kali) ===
 export const register = async (req: Request, res: Response) => {
   const data = registerSchema.parse(req.body);
 
@@ -70,6 +70,7 @@ export const register = async (req: Request, res: Response) => {
   });
 };
 
+// === VERIFIKASI REGISTRASI ===
 export const verifyRegister = async (req: Request, res: Response) => {
   const data = verifySchema.parse(req.body);
 
@@ -101,7 +102,6 @@ export const verifyRegister = async (req: Request, res: Response) => {
     },
   });
 
-  // Gunakan generateAccessToken agar payload sesuai (userId)
   const token = generateAccessToken({
     userId: user.id,
     email: user.email,
@@ -116,6 +116,7 @@ export const verifyRegister = async (req: Request, res: Response) => {
   });
 };
 
+// === LOGIN LANGSUNG (TANPA OTP) ===
 export const login = async (req: Request, res: Response) => {
   const data = loginSchema.parse(req.body);
 
@@ -138,60 +139,15 @@ export const login = async (req: Request, res: Response) => {
     throw new AppError("Kredensial tidak valid", 401);
   }
 
-  const otpCode = generateOtp();
-  const otpTimeout = new Date(Date.now() + 5 * 60 * 1000); // 5 menit
-
+  // Update waktu terakhir login
   await prisma.pengguna.update({
     where: { id: user.id },
     data: {
-      kodeOtp: otpCode,
-      otpTimeout: otpTimeout,
-    },
-  });
-
-  await sendOtpEmail({
-    email: user.email,
-    namaLengkap: user.namaLengkap,
-    kodeOtp: otpCode,
-  });
-
-  res.status(200).json({
-    success: true,
-    message: "Silakan cek email Anda untuk kode OTP login.",
-  });
-};
-
-export const verifyLogin = async (req: Request, res: Response) => {
-  const data = verifyLoginSchema.parse(req.body);
-
-  const user = await prisma.pengguna.findFirst({
-    where: {
-      OR: [{ email: data.identifier }, { namaPengguna: data.identifier }],
-    },
-  });
-
-  if (!user || user.status !== "aktif") {
-    throw new AppError("Pengguna tidak ditemukan atau tidak aktif", 401);
-  }
-
-  if (user.kodeOtp !== data.kodeOtp) {
-    throw new AppError("Kode OTP salah", 401);
-  }
-
-  if (!user.otpTimeout || user.otpTimeout < new Date()) {
-    throw new AppError("Kode OTP sudah kedaluwarsa", 401);
-  }
-
-  await prisma.pengguna.update({
-    where: { id: user.id },
-    data: {
-      kodeOtp: null,
-      otpTimeout: null,
       terakhirLogin: new Date(),
     },
   });
 
-  // Gunakan generateAccessToken agar payload sesuai (userId)
+  // Langsung Generate Token dan berikan ke User
   const token = generateAccessToken({
     userId: user.id,
     email: user.email,
@@ -206,6 +162,7 @@ export const verifyLogin = async (req: Request, res: Response) => {
   });
 };
 
+// === FORGOT PASSWORD ===
 export const forgotPassword = async (req: Request, res: Response) => {
   const data = forgotPasswordSchema.parse(req.body);
 
@@ -243,6 +200,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
   });
 };
 
+// === RESET PASSWORD ===
 export const resetPassword = async (req: Request, res: Response) => {
   const data = resetPasswordSchema.parse(req.body);
 
