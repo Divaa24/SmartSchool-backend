@@ -39,9 +39,7 @@ export const createAbsensi = async (req: AuthRequest, res: Response) => {
     const siswa = await prisma.pengguna.findUnique({ where: { id: userId } });
     if (!siswa) throw new AppError("Data siswa tidak ditemukan", 404);
 
-    // ==========================================
     // LOGIKA METODE 1: BARCODE / QR CODE
-    // ==========================================
     if (data.metode === "barcode") {
       if (!data.barcodeData)
         throw new AppError("Data barcode wajib dikirim", 400);
@@ -54,9 +52,7 @@ export const createAbsensi = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // ==========================================
     // LOGIKA METODE 2: LOKASI (GPS GEOFENCING)
-    // ==========================================
     if (data.metode === "lokasi" || data.metode === "face") {
       if (!data.lintang || !data.bujur) {
         throw new AppError(
@@ -88,10 +84,8 @@ export const createAbsensi = async (req: AuthRequest, res: Response) => {
         );
       }
     }
-
-    // ==========================================
+    
     // LOGIKA METODE 3: FACE RECOGNITION (Kirim ke Python)
-    // ==========================================
     let urlFotoSaved = null;
     if (data.metode === "face") {
       if (!file) throw new AppError("Foto wajah wajib disertakan", 400);
