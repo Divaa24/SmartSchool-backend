@@ -1,12 +1,17 @@
 import { z } from "zod";
 
 export const createAbsensiSchema = z.object({
-  kelasMapelId: z.string().uuid(),
-  jadwalMengajarId: z.string().uuid(),
+  kelasId: z.string().uuid("ID Kelas tidak valid"),
   status: z.enum(["hadir", "izin", "sakit", "alpha"]),
   keterangan: z.string().optional(),
-  metode: z.string().optional(),
-  lintang: z.number().optional(),
-  bujur: z.number().optional(),
-  urlFoto: z.string().url().optional(),
+
+  // Metode bisa salah satu dari array di pengaturan sekolah
+  metode: z.enum(["lokasi", "barcode", "face", "manual"]).default("lokasi"),
+
+  // Jika GPS
+  lintang: z.coerce.number().optional(), // gunakan coerce agar string dari FormData otomatis jadi number
+  bujur: z.coerce.number().optional(),
+
+  // Jika Barcode
+  barcodeData: z.string().optional(),
 });

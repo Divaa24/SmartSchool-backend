@@ -20,6 +20,7 @@ import { triggerDeadlineH1Notification } from "./controllers/notifikasi.controll
 import absensiRoutes from "./routes/absensi.routes";
 import soalUjianRoutes from "./routes/soalUjian.routes";
 import ujianRoutes from "./routes/ujian.routes";
+import infrastrukturRoutes from "./routes/infrastruktur.routes";
 
 const app: Application = express();
 
@@ -61,6 +62,7 @@ app.use("/api/v1/notifikasi", notifikasiRoutes);
 app.use("/api/v1/absensi", absensiRoutes);
 app.use("/api/v1/soal-ujian", soalUjianRoutes);
 app.use("/api/v1/ujian", ujianRoutes);
+app.use("/api/v1/infrastruktur", infrastrukturRoutes);
 
 setInterval(
   () => {

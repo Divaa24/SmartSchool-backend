@@ -2,58 +2,88 @@ import { Response } from "express";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { prisma } from "../config/db";
 import bycrypt from "bcryptjs";
+import { paginatedResponse } from "../utils/responseFormatter";
 
-export const getUsers = async (
-  req: AuthRequest,
-  res: Response
-) => {
+export const getUsers = async (req: AuthRequest, res: Response) => {
   try {
-    const users = await prisma.pengguna.findMany({
-      select: {
-        id: true,
-        email: true,
-        namaPengguna: true,
-        namaLengkap: true,
-        avatar: true,
-        nipd: true,
-        nip: true,
-        nuptk: true,
-        nisn: true,
-        jenisKelamin: true,
-        status: true,
-        dibuatPada: true,
-        diperbaruiPada: true,
+    const sekolahId = req.user?.sekolahId;
 
-        sekolah: {
-          select: {
-            id: true,
-            nama: true,
-            kode: true,
-          },
-        },
+    // Ambil parameter dari query URL
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = req.query.search as string;
+    const status = req.query.status as string;
+    const role = req.query.role as string;
+    const sortBy = (req.query.sortBy as string) || "dibuatPada";
+    const sortOrder = (req.query.sortOrder as string) || "desc";
 
-        peran: {
-          select: {
-            id: true,
-            nama: true,
-            namaTampilan: true,
-          },
-        },
-      },
-    });
+    const skip = (page - 1) * limit;
 
-    if (!users) {
-      return res.status(404).json({
-        success: false,
-        message: "Pengguna tidak ditemukan",
-      });
+    // Build query filter
+    const whereClause: any = {
+      dihapusPada: null,
+    };
+
+    // Batasi data per tenant jika login sebagai admin sekolah
+    if (sekolahId) {
+      whereClause.sekolahId = sekolahId;
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Berhasil mengambil data pengguna",
-      data: users,
-    });
+    if (status) whereClause.status = status;
+
+    if (role) {
+      whereClause.peran = { nama: role };
+    }
+
+    if (search) {
+      whereClause.OR = [
+        { namaLengkap: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { nip: { contains: search, mode: "insensitive" } },
+        { nisn: { contains: search, mode: "insensitive" } },
+        { namaPengguna: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    const [users, totalData] = await Promise.all([
+      prisma.pengguna.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        orderBy: { [sortBy]: sortOrder },
+        select: {
+          id: true,
+          email: true,
+          namaPengguna: true,
+          namaLengkap: true,
+          avatar: true,
+          nipd: true,
+          nip: true,
+          nisn: true,
+          jenisKelamin: true,
+          status: true,
+          dibuatPada: true,
+          jabatan: true,
+          golongan: true,
+          sekolah: {
+            select: { id: true, nama: true, kode: true },
+          },
+          peran: {
+            select: { id: true, nama: true, namaTampilan: true },
+          },
+        },
+      }),
+      prisma.pengguna.count({ where: whereClause }),
+    ]);
+
+    return paginatedResponse(
+      res,
+      "Berhasil mengambil data pengguna",
+      users,
+      page,
+      limit,
+      totalData,
+    );
   } catch (error) {
     console.error("Error getUsers:", error);
     return res.status(500).json({
@@ -63,10 +93,7 @@ export const getUsers = async (
   }
 };
 
-export const createUser = async (
-  req: AuthRequest,
-  res: Response
-) => {
+export const createUser = async (req: AuthRequest, res: Response) => {
   try {
     const {
       namaPengguna,
@@ -85,26 +112,31 @@ export const createUser = async (
       alamat,
       noTelepon,
       avatar,
+      // Tambahan data
+      jabatan,
+      golongan,
+      nik,
+      namaAyah,
+      pekerjaanAyah,
+      namaIbu,
+      pekerjaanIbu,
+      alamatKtp,
+      alamatDomisili,
+      kecamatan,
+      kelurahan,
+      kota,
     } = req.body;
 
-    if (
-      !namaPengguna ||
-      !email ||
-      !kataSandi ||
-      !namaLengkap ||
-      !peranId 
-    ) {
+    if (!namaPengguna || !email || !kataSandi || !namaLengkap || !peranId) {
       return res.status(400).json({
         success: false,
         message: "Data tidak lengkap",
       });
     }
+
     const existingUser = await prisma.pengguna.findFirst({
       where: {
-        OR: [
-          { email },
-          { namaPengguna },
-        ],
+        OR: [{ email }, { namaPengguna }],
       },
     });
 
@@ -149,31 +181,34 @@ export const createUser = async (
         noTelepon: noTelepon || null,
         avatar: avatar || null,
 
+        jabatan: jabatan || null,
+        golongan: golongan || null,
+        nik: nik || null,
+        namaAyah: namaAyah || null,
+        pekerjaanAyah: pekerjaanAyah || null,
+        namaIbu: namaIbu || null,
+        pekerjaanIbu: pekerjaanIbu || null,
+        alamatKtp: alamatKtp || null,
+        alamatDomisili: alamatDomisili || null,
+        kecamatan: kecamatan || null,
+        kelurahan: kelurahan || null,
+        kota: kota || null,
+
         status: "aktif",
       },
-
       select: {
         id: true,
         namaPengguna: true,
         email: true,
         namaLengkap: true,
         status: true,
-
         sekolah: {
-          select: {
-            id: true,
-            nama: true,
-          },
+          select: { id: true, nama: true },
         },
-
         peran: {
-          select: {
-            id: true,
-            nama: true,
-            namaTampilan: true,
-          },
+          select: { id: true, nama: true, namaTampilan: true },
         },
-      }
+      },
     });
 
     return res.status(201).json({
@@ -187,16 +222,12 @@ export const createUser = async (
       success: false,
       message: "Terjadi kesalahan server",
     });
-
   }
-}
+};
 
-export const updateUser = async (
-  req: AuthRequest,
-  res: Response
-) => {
+export const updateUser = async (req: AuthRequest, res: Response) => {
   try {
-    const  id  = req.params.id as string;
+    const id = req.params.id as string;
 
     const {
       namaPengguna,
@@ -216,6 +247,19 @@ export const updateUser = async (
       noTelepon,
       avatar,
       status,
+      // Tambahan data
+      jabatan,
+      golongan,
+      nik,
+      namaAyah,
+      pekerjaanAyah,
+      namaIbu,
+      pekerjaanIbu,
+      alamatKtp,
+      alamatDomisili,
+      kecamatan,
+      kelurahan,
+      kota,
     } = req.body;
 
     const existingUser = await prisma.pengguna.findUnique({
@@ -228,6 +272,7 @@ export const updateUser = async (
         message: "Pengguna tidak ditemukan",
       });
     }
+
     const data: any = {
       ...(namaPengguna !== undefined && { namaPengguna }),
       ...(email !== undefined && { email }),
@@ -240,14 +285,29 @@ export const updateUser = async (
       ...(nisn !== undefined && { nisn }),
       ...(jenisKelamin !== undefined && { jenisKelamin }),
       ...(tempatLahir !== undefined && { tempatLahir }),
-      ...(tanggalLahir !== undefined && { tanggalLahir: new Date(tanggalLahir) }),
+      ...(tanggalLahir !== undefined && {
+        tanggalLahir: new Date(tanggalLahir),
+      }),
       ...(alamat !== undefined && { alamat }),
       ...(noTelepon !== undefined && { noTelepon }),
       ...(avatar !== undefined && { avatar }),
       ...(status !== undefined && { status }),
+
+      ...(jabatan !== undefined && { jabatan }),
+      ...(golongan !== undefined && { golongan }),
+      ...(nik !== undefined && { nik }),
+      ...(namaAyah !== undefined && { namaAyah }),
+      ...(pekerjaanAyah !== undefined && { pekerjaanAyah }),
+      ...(namaIbu !== undefined && { namaIbu }),
+      ...(pekerjaanIbu !== undefined && { pekerjaanIbu }),
+      ...(alamatKtp !== undefined && { alamatKtp }),
+      ...(alamatDomisili !== undefined && { alamatDomisili }),
+      ...(kecamatan !== undefined && { kecamatan }),
+      ...(kelurahan !== undefined && { kelurahan }),
+      ...(kota !== undefined && { kota }),
     };
 
-    if(kataSandi) {
+    if (kataSandi) {
       data.kataSandi = await bycrypt.hash(kataSandi, 10);
     }
 
@@ -260,22 +320,13 @@ export const updateUser = async (
         email: true,
         namaLengkap: true,
         status: true,
-
         sekolah: {
-          select: {
-            id: true,
-            nama: true,
-          },
+          select: { id: true, nama: true },
         },
-
         peran: {
-          select: {
-            id: true,
-            nama: true,
-            namaTampilan: true,
-          },
-        }
-      }
+          select: { id: true, nama: true, namaTampilan: true },
+        },
+      },
     });
 
     return res.status(200).json({
@@ -289,38 +340,33 @@ export const updateUser = async (
       success: false,
       message: "Terjadi kesalahan server",
     });
-  };
-}
+  }
+};
 
-export const deleteUser = async (
-  req: AuthRequest,
-  res: Response
-) => {
+export const deleteUser = async (req: AuthRequest, res: Response) => {
   try {
-    const  id  = req.params.id as string;
+    const id = req.params.id as string;
 
     const user = await prisma.pengguna.findUnique({
       where: { id },
     });
 
-    if(!user) {
+    if (!user) {
       return res.status(404).json({
         success: false,
         message: "Pengguna tidak ditemukan",
       });
     }
 
-   const updatedUser = await prisma.pengguna.update({
+    const updatedUser = await prisma.pengguna.update({
       where: { id },
-      data: {
-        status: "nonaktif",
-      }
+      data: { status: "nonaktif", dihapusPada: new Date() },
     });
 
     return res.status(200).json({
       success: true,
-      message: "Pengguna berhasil dihapus",
-      data: user,
+      message: "Pengguna berhasil dinonaktifkan",
+      data: updatedUser,
     });
   } catch (error) {
     console.error("Error deleteUser:", error);
@@ -329,12 +375,9 @@ export const deleteUser = async (
       message: "Terjadi kesalahan server",
     });
   }
-}
+};
 
-export const profile = async (
-  req: AuthRequest,
-  res: Response
-) => {
+export const profile = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -347,7 +390,6 @@ export const profile = async (
       where: {
         id: req.user.userId,
       },
-
       select: {
         id: true,
         email: true,
@@ -358,10 +400,14 @@ export const profile = async (
         nip: true,
         nuptk: true,
         nisn: true,
+        nik: true,
+        jabatan: true,
+        golongan: true,
         jenisKelamin: true,
         tempatLahir: true,
         tanggalLahir: true,
         alamat: true,
+        alamatDomisili: true,
         noTelepon: true,
         status: true,
         terakhirLogin: true,
@@ -409,7 +455,6 @@ export const profile = async (
     });
   } catch (error) {
     console.error(error);
-
     return res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -417,10 +462,7 @@ export const profile = async (
   }
 };
 
-export const updateProfile = async (
-  req: AuthRequest,
-  res: Response
-) => {
+export const updateProfile = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -434,31 +476,26 @@ export const updateProfile = async (
       noTelepon,
       alamat,
       avatar,
+      alamatDomisili,
+      tempatLahir,
+      tanggalLahir,
     } = req.body;
 
     const user = await prisma.pengguna.update({
       where: {
         id: req.user.userId,
       },
-
       data: {
-        ...(namaLengkap !== undefined && {
-          namaLengkap,
-        }),
-
-        ...(noTelepon !== undefined && {
-          noTelepon,
-        }),
-
-        ...(alamat !== undefined && {
-          alamat,
-        }),
-
-        ...(avatar !== undefined && {
-          avatar,
+        ...(namaLengkap !== undefined && { namaLengkap }),
+        ...(noTelepon !== undefined && { noTelepon }),
+        ...(alamat !== undefined && { alamat }),
+        ...(avatar !== undefined && { avatar }),
+        ...(alamatDomisili !== undefined && { alamatDomisili }),
+        ...(tempatLahir !== undefined && { tempatLahir }),
+        ...(tanggalLahir !== undefined && {
+          tanggalLahir: new Date(tanggalLahir),
         }),
       },
-
       select: {
         id: true,
         namaLengkap: true,
@@ -467,22 +504,15 @@ export const updateProfile = async (
         avatar: true,
         noTelepon: true,
         alamat: true,
+        alamatDomisili: true,
         status: true,
 
         sekolah: {
-          select: {
-            id: true,
-            nama: true,
-            subdomain: true,
-          },
+          select: { id: true, nama: true, subdomain: true },
         },
 
         peran: {
-          select: {
-            id: true,
-            nama: true,
-            namaTampilan: true,
-          },
+          select: { id: true, nama: true, namaTampilan: true },
         },
       },
     });
@@ -494,11 +524,9 @@ export const updateProfile = async (
     });
   } catch (error) {
     console.error(error);
-
     return res.status(500).json({
       success: false,
       message: "Internal server error",
     });
   }
 };
-

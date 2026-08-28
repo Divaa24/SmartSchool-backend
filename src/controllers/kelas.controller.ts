@@ -1,32 +1,104 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/db";
+import {
+  createKelasSchema,
+  updateKelasSchema,
+} from "../validations/kelas.Validation";
+import { paginatedResponse, successResponse } from "../utils/responseFormatter";
+import { AppError } from "../utils/appError";
+import { AuthRequest } from "../middlewares/auth.middleware";
 
-interface KelasBody {
-  nama: string;
-  tingkat: number;
-  tahunAjaranId: string;
-  waliKelasId?: string;
-}
-
-export const getKelas = async (
-  req: Request,
-  res: Response
-) => {
+export const getKelas = async (req: AuthRequest, res: Response) => {
   try {
-    const sekolahId = (req as any).user?.sekolahId;
+    const sekolahId = req.user?.sekolahId;
+    if (!sekolahId) throw new AppError("Sekolah tidak ditemukan", 400);
 
-    if (!sekolahId) {
-      return res.status(400).json({
-        success: false,
-        message: "Sekolah tidak ditemukan",
-      });
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = req.query.search as string;
+    const tahunAjaranId = req.query.tahunAjaranId as string;
+    const tingkat = req.query.tingkat
+      ? parseInt(req.query.tingkat as string)
+      : undefined;
+    const sortBy = (req.query.sortBy as string) || "tingkat";
+    const sortOrder = (req.query.sortOrder as string) || "asc";
+
+    const skip = (page - 1) * limit;
+
+    const whereClause: any = {
+      sekolahId,
+      dihapusPada: null,
+    };
+
+    if (tahunAjaranId) whereClause.tahunAjaranId = tahunAjaranId;
+    if (tingkat !== undefined) whereClause.tingkat = tingkat;
+
+    if (search) {
+      whereClause.OR = [
+        { nama: { contains: search, mode: "insensitive" } },
+        {
+          waliKelas: { namaLengkap: { contains: search, mode: "insensitive" } },
+        },
+      ];
     }
 
-    const data = await prisma.kelas.findMany({
-      where: {
-        sekolahId,
-        dihapusPada: null,
-      },
+    const [data, totalData] = await Promise.all([
+      prisma.kelas.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        include: {
+          tahunAjaran: true,
+          waliKelas: {
+            select: {
+              id: true,
+              namaLengkap: true,
+              email: true,
+              nip: true,
+            },
+          },
+          lantai: {
+            include: {
+              gedung: {
+                select: { id: true, nama: true, kode: true },
+              },
+            },
+          },
+          _count: {
+            select: {
+              anggota: true,
+              kelasMapel: true,
+            },
+          },
+        },
+        orderBy: { [sortBy]: sortOrder },
+      }),
+      prisma.kelas.count({ where: whereClause }),
+    ]);
+
+    return paginatedResponse(
+      res,
+      "Berhasil mengambil data kelas",
+      data,
+      page,
+      limit,
+      totalData,
+    );
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const getDetailKelas = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const sekolahId = req.user?.sekolahId;
+
+    const kelas = await prisma.kelas.findFirst({
+      where: { id, sekolahId, dihapusPada: null },
       include: {
         tahunAjaran: true,
         waliKelas: {
@@ -34,345 +106,171 @@ export const getKelas = async (
             id: true,
             namaLengkap: true,
             email: true,
+            nip: true,
+            noTelepon: true,
+          },
+        },
+        lantai: {
+          include: { gedung: true },
+        },
+        anggota: {
+          include: {
+            siswa: {
+              select: {
+                id: true,
+                namaLengkap: true,
+                nisn: true,
+                nis: true,
+                jenisKelamin: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        kelasMapel: {
+          where: { dihapusPada: null },
+          include: {
+            mataPelajaran: true,
+            guruPengajar: {
+              select: { id: true, namaLengkap: true, nip: true },
+            },
+            jadwalMengajar: {
+              where: { dihapusPada: null },
+            },
           },
         },
       },
-      orderBy: {
-        tingkat: "asc",
-      },
     });
 
-    return res.status(200).json({
-      success: true,
-      message: "Berhasil mengambil data kelas",
-      data,
-    });
+    if (!kelas) throw new AppError("Kelas tidak ditemukan", 404);
+
+    return successResponse(res, "Berhasil mengambil detail kelas", kelas);
   } catch (error) {
     console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 };
 
-export const createKelas = async (
-  req: Request<{}, {}, KelasBody>,
-  res: Response
-) => {
+export const createKelas = async (req: AuthRequest, res: Response) => {
   try {
-    const sekolahId = (req as any).user?.sekolahId;
+    const sekolahId = req.user?.sekolahId;
+    if (!sekolahId) throw new AppError("Sekolah tidak ditemukan", 400);
 
-    if (!sekolahId) {
-      return res.status(400).json({
-        success: false,
-        message: "Sekolah tidak ditemukan",
-      });
-    }
-
-    const {
-      nama,
-      tingkat,
-      tahunAjaranId,
-      waliKelasId,
-    } = req.body;
-
-    if (!nama || !tingkat || !tahunAjaranId) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Nama, tingkat, dan tahun ajaran wajib diisi",
-      });
-    }
+    const validated = createKelasSchema.parse(req.body);
 
     const sekolah = await prisma.sekolah.findUnique({
-      where: {
-        id: sekolahId,
-      },
-      select: {
-        jenjang: true,
-      },
+      where: { id: sekolahId },
+      select: { jenjang: true },
     });
-
-    if (!sekolah) {
-      return res.status(404).json({
-        success: false,
-        message: "Sekolah tidak ditemukan",
-      });
-    }
+    if (!sekolah) throw new AppError("Sekolah tidak ditemukan", 404);
 
     const jenjang = sekolah.jenjang.toUpperCase();
-
     let tingkatValid = false;
-
-    if (jenjang === "SD") {
-      tingkatValid = tingkat >= 1 && tingkat <= 6;
-    } else if (jenjang === "SMP") {
-      tingkatValid = tingkat >= 7 && tingkat <= 9;
-    } else if (
-      jenjang === "SMA" ||
-      jenjang === "SMK"
-    ) {
-      tingkatValid = tingkat >= 10 && tingkat <= 12;
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: `Jenjang sekolah "${sekolah.jenjang}" belum didukung`,
-      });
-    }
+    if (jenjang === "SD")
+      tingkatValid = validated.tingkat >= 1 && validated.tingkat <= 6;
+    else if (jenjang === "SMP")
+      tingkatValid = validated.tingkat >= 7 && validated.tingkat <= 9;
+    else if (jenjang === "SMA" || jenjang === "SMK")
+      tingkatValid = validated.tingkat >= 10 && validated.tingkat <= 12;
 
     if (!tingkatValid) {
-      return res.status(400).json({
-        success: false,
-        message: `Tingkat ${tingkat} tidak valid untuk sekolah ${jenjang}`,
-      });
+      throw new AppError(
+        `Tingkat ${validated.tingkat} tidak valid untuk jenjang ${jenjang}`,
+        400,
+      );
     }
 
-    const tahunAjaran =
-      await prisma.tahunAjaran.findFirst({
-        where: {
-          id: tahunAjaranId,
-          sekolahId,
-          dihapusPada: null,
-        },
-      });
-
-    if (!tahunAjaran) {
-      return res.status(404).json({
-        success: false,
-        message: "Tahun ajaran tidak ditemukan",
-      });
-    }
-
-    if (waliKelasId) {
-      const waliKelas =
-        await prisma.pengguna.findFirst({
-          where: {
-            id: waliKelasId,
-            sekolahId,
-            dihapusPada: null,
-          },
-        });
-
-      if (!waliKelas) {
-        return res.status(404).json({
-          success: false,
-          message: "Wali kelas tidak ditemukan",
-        });
-      }
-    }
-
+    // Validasi Duplikasi Nama di Tahun Ajaran yang sama
     const existing = await prisma.kelas.findFirst({
       where: {
-        nama,
-        tahunAjaranId,
+        nama: validated.nama,
+        tahunAjaranId: validated.tahunAjaranId,
         sekolahId,
         dihapusPada: null,
       },
     });
-
-    if (existing) {
-      return res.status(409).json({
-        success: false,
-        message: "Kelas tersebut sudah ada",
-      });
-    }
+    if (existing)
+      throw new AppError(
+        "Kelas dengan nama tersebut sudah terdaftar di tahun ajaran ini",
+        409,
+      );
 
     const data = await prisma.kelas.create({
       data: {
-        nama,
-        tingkat,
+        nama: validated.nama,
+        tingkat: validated.tingkat,
+        tahunAjaranId: validated.tahunAjaranId,
+        waliKelasId: validated.waliKelasId || null,
+        kapasitas: validated.kapasitas,
+        fotoKelasUrl: validated.fotoKelasUrl || null,
+        lantaiId: validated.lantaiId || null,
         sekolahId,
-        tahunAjaranId,
-        waliKelasId,
       },
     });
 
-    return res.status(201).json({
-      success: true,
-      message: "Kelas berhasil ditambahkan",
-      data,
-    });
+    return successResponse(res, "Kelas berhasil ditambahkan", data, 201);
   } catch (error) {
     console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: (error as Error).message || "Internal server error",
+      });
   }
 };
 
-export const updateKelas = async (
-  req: Request<
-    { id: string },
-    {},
-    Partial<KelasBody>
-  >,
-  res: Response
-) => {
+export const updateKelas = async (req: AuthRequest, res: Response) => {
   try {
-    const sekolahId = (req as any).user?.sekolahId;
-    const { id } = req.params;
+    const sekolahId = req.user?.sekolahId;
+    const id = req.params.id as string;
 
     const existing = await prisma.kelas.findFirst({
-      where: {
-        id,
-        sekolahId,
-        dihapusPada: null,
-      },
+      where: { id, sekolahId, dihapusPada: null },
     });
+    if (!existing) throw new AppError("Kelas tidak ditemukan", 404);
 
-    if (!existing) {
-      return res.status(404).json({
-        success: false,
-        message: "Kelas tidak ditemukan",
-      });
-    }
-
-    const {
-      nama,
-      tingkat,
-      tahunAjaranId,
-      waliKelasId,
-    } = req.body;
-
-    if (tingkat !== undefined) {
-      const sekolah =
-        await prisma.sekolah.findUnique({
-          where: {
-            id: sekolahId,
-          },
-          select: {
-            jenjang: true,
-          },
-        });
-
-      if (!sekolah) {
-        return res.status(404).json({
-          success: false,
-          message: "Sekolah tidak ditemukan",
-        });
-      }
-
-      const jenjang =
-        sekolah.jenjang.toUpperCase();
-
-      let valid = false;
-
-      if (jenjang === "SD") {
-        valid = tingkat >= 1 && tingkat <= 6;
-      } else if (jenjang === "SMP") {
-        valid = tingkat >= 7 && tingkat <= 9;
-      } else if (
-        jenjang === "SMA" ||
-        jenjang === "SMK"
-      ) {
-        valid = tingkat >= 10 && tingkat <= 12;
-      }
-
-      if (!valid) {
-        return res.status(400).json({
-          success: false,
-          message: `Tingkat ${tingkat} tidak valid untuk ${jenjang}`,
-        });
-      }
-    }
-
-    if (tahunAjaranId) {
-      const tahunAjaran =
-        await prisma.tahunAjaran.findFirst({
-          where: {
-            id: tahunAjaranId,
-            sekolahId,
-            dihapusPada: null,
-          },
-        });
-
-      if (!tahunAjaran) {
-        return res.status(404).json({
-          success: false,
-          message: "Tahun ajaran tidak ditemukan",
-        });
-      }
-    }
+    const validated = updateKelasSchema.parse(req.body);
 
     const data = await prisma.kelas.update({
-      where: {
-        id,
-      },
-      data: {
-        ...(nama && { nama }),
-        ...(tingkat !== undefined && {
-          tingkat,
-        }),
-        ...(tahunAjaranId && {
-          tahunAjaranId,
-        }),
-        ...(waliKelasId !== undefined && {
-          waliKelasId,
-        }),
-      },
+      where: { id },
+      data: validated,
     });
 
-    return res.status(200).json({
-      success: true,
-      message: "Kelas berhasil diperbarui",
-      data,
-    });
+    return successResponse(res, "Kelas berhasil diperbarui", data);
   } catch (error) {
     console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return res
+      .status(500)
+      .json({
+        success: false,
+        message: (error as Error).message || "Internal server error",
+      });
   }
 };
 
-export const deleteKelas = async (
-  req: Request<{ id: string }>,
-  res: Response
-) => {
+export const deleteKelas = async (req: AuthRequest, res: Response) => {
   try {
-    const sekolahId = (req as any).user?.sekolahId;
-    const { id } = req.params;
+    const sekolahId = req.user?.sekolahId;
+    const id = req.params.id as string;
 
     const existing = await prisma.kelas.findFirst({
-      where: {
-        id,
-        sekolahId,
-        dihapusPada: null,
-      },
+      where: { id, sekolahId, dihapusPada: null },
     });
-
-    if (!existing) {
-      return res.status(404).json({
-        success: false,
-        message: "Kelas tidak ditemukan",
-      });
-    }
+    if (!existing) throw new AppError("Kelas tidak ditemukan", 404);
 
     await prisma.kelas.update({
-      where: {
-        id,
-      },
-      data: {
-        dihapusPada: new Date(),
-      },
+      where: { id },
+      data: { dihapusPada: new Date() },
     });
 
-    return res.status(200).json({
-      success: true,
-      message: "Kelas berhasil dihapus",
-    });
+    return successResponse(res, "Kelas berhasil dihapus");
   } catch (error) {
     console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 };
