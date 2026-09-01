@@ -117,7 +117,7 @@ export const daftarPpdb = async (
 
     const validasiUsia =
       validasiUmurPpdb(
-        sekolah.jenjang,
+        sekolah.jenjang || "",
         new Date(tanggalLahir)
       );
 
@@ -522,7 +522,8 @@ export const verifikasiPpdb = async (
             await tx.anggotaKelas.create({
               data: {
                 kelasId: kelas.id,
-                siswaId: pengguna.id,
+                penggunaId: pengguna.id,
+                tahunAjaranId: kelas.tahunAjaranId,
               },
             });
 

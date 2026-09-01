@@ -166,8 +166,8 @@ export const createKelas = async (req: AuthRequest, res: Response) => {
     });
     if (!sekolah) throw new AppError("Sekolah tidak ditemukan", 404);
 
-    const jenjang = sekolah.jenjang.toUpperCase();
-    let tingkatValid = false;
+    const jenjang = (sekolah.jenjang || "").toUpperCase();
+    let tingkatValid = true;
     if (jenjang === "SD")
       tingkatValid = validated.tingkat >= 1 && validated.tingkat <= 6;
     else if (jenjang === "SMP")
@@ -200,11 +200,11 @@ export const createKelas = async (req: AuthRequest, res: Response) => {
     const data = await prisma.kelas.create({
       data: {
         nama: validated.nama,
-        tingkat: validated.tingkat,
+        tingkat: String(validated.tingkat),
         tahunAjaranId: validated.tahunAjaranId,
         waliKelasId: validated.waliKelasId || null,
         kapasitas: validated.kapasitas,
-        fotoKelasUrl: validated.fotoKelasUrl || null,
+        fotoKelas: validated.fotoKelasUrl || null,
         lantaiId: validated.lantaiId || null,
         sekolahId,
       },
@@ -233,10 +233,15 @@ export const updateKelas = async (req: AuthRequest, res: Response) => {
     if (!existing) throw new AppError("Kelas tidak ditemukan", 404);
 
     const validated = updateKelasSchema.parse(req.body);
+    const { tingkat, fotoKelasUrl, ...rest } = validated;
 
     const data = await prisma.kelas.update({
       where: { id },
-      data: validated,
+      data: {
+        ...rest,
+        ...(tingkat !== undefined && { tingkat: String(tingkat) }),
+        ...(fotoKelasUrl !== undefined && { fotoKelas: fotoKelasUrl }),
+      },
     });
 
     return successResponse(res, "Kelas berhasil diperbarui", data);

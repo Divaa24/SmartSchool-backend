@@ -5,12 +5,9 @@ interface KelasMapelBody {
   kelasId: string;
   mataPelajaranId: string;
   guruPengajarId: string;
-};
+}
 
-export const getKelasMapel = async (
-  req: Request,
-  res: Response
-) => {
+export const getKelasMapel = async (req: Request, res: Response) => {
   try {
     const sekolahId = (req as any).user?.sekolahId;
 
@@ -61,26 +58,17 @@ export const getKelasMapel = async (
 
 export const createKelasMapel = async (
   req: Request<{}, {}, KelasMapelBody>,
-  res: Response
+  res: Response,
 ) => {
   try {
     const sekolahId = (req as any).user?.sekolahId;
 
-    const {
-      kelasId,
-      mataPelajaranId,
-      guruPengajarId,
-    } = req.body;
+    const { kelasId, mataPelajaranId, guruPengajarId } = req.body;
 
-    if (
-      !kelasId ||
-      !mataPelajaranId ||
-      !guruPengajarId
-    ) {
+    if (!kelasId || !mataPelajaranId || !guruPengajarId) {
       return res.status(400).json({
         success: false,
-        message:
-          "Kelas, mata pelajaran, dan guru pengajar wajib diisi",
+        message: "Kelas, mata pelajaran, dan guru pengajar wajib diisi",
       });
     }
 
@@ -99,14 +87,13 @@ export const createKelasMapel = async (
       });
     }
 
-    const mataPelajaran =
-      await prisma.mataPelajaran.findFirst({
-        where: {
-          id: mataPelajaranId,
-          sekolahId,
-          dihapusPada: null,
-        },
-      });
+    const mataPelajaran = await prisma.mataPelajaran.findFirst({
+      where: {
+        id: mataPelajaranId,
+        sekolahId,
+        dihapusPada: null,
+      },
+    });
 
     if (!mataPelajaran) {
       return res.status(404).json({
@@ -130,20 +117,18 @@ export const createKelasMapel = async (
       });
     }
 
-    const existing =
-      await prisma.kelasMapel.findFirst({
-        where: {
-          kelasId,
-          mataPelajaranId,
-          dihapusPada: null,
-        },
-      });
+    const existing = await prisma.kelasMapel.findFirst({
+      where: {
+        kelasId,
+        mataPelajaranId,
+        dihapusPada: null,
+      },
+    });
 
     if (existing) {
       return res.status(409).json({
         success: false,
-        message:
-          "Mata pelajaran sudah diassign ke kelas tersebut",
+        message: "Mata pelajaran sudah diassign ke kelas tersebut",
       });
     }
 
@@ -170,8 +155,7 @@ export const createKelasMapel = async (
 
     return res.status(201).json({
       success: true,
-      message:
-        "Mata pelajaran berhasil diassign ke kelas",
+      message: "Mata pelajaran berhasil diassign ke kelas",
       data,
     });
   } catch (error) {
@@ -185,28 +169,23 @@ export const createKelasMapel = async (
 };
 
 export const updateKelasMapel = async (
-  req: Request<
-    { id: string },
-    {},
-    Partial<KelasMapelBody>
-  >,
-  res: Response
+  req: Request<{ id: string }, {}, Partial<KelasMapelBody>>,
+  res: Response,
 ) => {
   try {
     const sekolahId = (req as any).user?.sekolahId;
     const { id } = req.params;
 
-    const existing =
-      await prisma.kelasMapel.findFirst({
-        where: {
-          id,
-          dihapusPada: null,
+    const existing = await prisma.kelasMapel.findFirst({
+      where: {
+        id,
+        dihapusPada: null,
 
-          kelas: {
-            sekolahId,
-          },
+        kelas: {
+          sekolahId,
         },
-      });
+      },
+    });
 
     if (!existing) {
       return res.status(404).json({
@@ -215,21 +194,16 @@ export const updateKelasMapel = async (
       });
     }
 
-    const {
-      kelasId,
-      mataPelajaranId,
-      guruPengajarId,
-    } = req.body;
+    const { kelasId, mataPelajaranId, guruPengajarId } = req.body;
 
     if (kelasId) {
-      const kelas =
-        await prisma.kelas.findFirst({
-          where: {
-            id: kelasId,
-            sekolahId,
-            dihapusPada: null,
-          },
-        });
+      const kelas = await prisma.kelas.findFirst({
+        where: {
+          id: kelasId,
+          sekolahId,
+          dihapusPada: null,
+        },
+      });
 
       if (!kelas) {
         return res.status(404).json({
@@ -240,14 +214,13 @@ export const updateKelasMapel = async (
     }
 
     if (mataPelajaranId) {
-      const mapel =
-        await prisma.mataPelajaran.findFirst({
-          where: {
-            id: mataPelajaranId,
-            sekolahId,
-            dihapusPada: null,
-          },
-        });
+      const mapel = await prisma.mataPelajaran.findFirst({
+        where: {
+          id: mataPelajaranId,
+          sekolahId,
+          dihapusPada: null,
+        },
+      });
 
       if (!mapel) {
         return res.status(404).json({
@@ -258,14 +231,13 @@ export const updateKelasMapel = async (
     }
 
     if (guruPengajarId) {
-      const guru =
-        await prisma.pengguna.findFirst({
-          where: {
-            id: guruPengajarId,
-            sekolahId,
-            dihapusPada: null,
-          },
-        });
+      const guru = await prisma.pengguna.findFirst({
+        where: {
+          id: guruPengajarId,
+          sekolahId,
+          dihapusPada: null,
+        },
+      });
 
       if (!guru) {
         return res.status(404).json({
@@ -275,33 +247,32 @@ export const updateKelasMapel = async (
       }
     }
 
-    const data =
-      await prisma.kelasMapel.update({
-        where: {
-          id,
-        },
-        data: {
-          ...(kelasId && { kelasId }),
-          ...(mataPelajaranId && {
-            mataPelajaranId,
-          }),
-          ...(guruPengajarId && {
-            guruPengajarId,
-          }),
-        },
+    const data = await prisma.kelasMapel.update({
+      where: {
+        id,
+      },
+      data: {
+        ...(kelasId && { kelasId }),
+        ...(mataPelajaranId && {
+          mataPelajaranId,
+        }),
+        ...(guruPengajarId && {
+          guruPengajarId,
+        }),
+      },
 
-        include: {
-          kelas: true,
-          mataPelajaran: true,
-          guruPengajar: {
-            select: {
-              id: true,
-              namaLengkap: true,
-              email: true,
-            },
+      include: {
+        kelas: true,
+        mataPelajaran: true,
+        guruPengajar: {
+          select: {
+            id: true,
+            namaLengkap: true,
+            email: true,
           },
         },
-      });
+      },
+    });
 
     return res.status(200).json({
       success: true,
@@ -320,23 +291,22 @@ export const updateKelasMapel = async (
 
 export const deleteKelasMapel = async (
   req: Request<{ id: string }>,
-  res: Response
+  res: Response,
 ) => {
   try {
     const sekolahId = (req as any).user?.sekolahId;
     const { id } = req.params;
 
-    const existing =
-      await prisma.kelasMapel.findFirst({
-        where: {
-          id,
-          dihapusPada: null,
+    const existing = await prisma.kelasMapel.findFirst({
+      where: {
+        id,
+        dihapusPada: null,
 
-          kelas: {
-            sekolahId,
-          },
+        kelas: {
+          sekolahId,
         },
-      });
+      },
+    });
 
     if (!existing) {
       return res.status(404).json({
@@ -366,5 +336,76 @@ export const deleteKelasMapel = async (
       success: false,
       message: "Internal server error",
     });
+  }
+};
+
+export const createBulkKelasMapel = async (req: Request, res: Response) => {
+  try {
+    const sekolahId = (req as any).user?.sekolahId;
+    const { kelasIds, mataPelajaranId, guruPengajarId } = req.body; // Divalidasi via middleware
+
+    // 1. Verifikasi Mapel & Guru
+    const mapel = await prisma.mataPelajaran.findFirst({
+      where: { id: mataPelajaranId, sekolahId, dihapusPada: null },
+    });
+    if (!mapel)
+      return res
+        .status(404)
+        .json({ success: false, message: "Mata pelajaran tidak ditemukan" });
+
+    const guru = await prisma.pengguna.findFirst({
+      where: { id: guruPengajarId, sekolahId, dihapusPada: null },
+    });
+    if (!guru)
+      return res
+        .status(404)
+        .json({ success: false, message: "Guru tidak ditemukan" });
+
+    // 2. Ambil kelas yang valid & cek duplikasi
+    const kelasValid = await prisma.kelas.findMany({
+      where: { id: { in: kelasIds }, sekolahId, dihapusPada: null },
+      select: { id: true, nama: true },
+    });
+
+    const existingAssigned = await prisma.kelasMapel.findMany({
+      where: {
+        kelasId: { in: kelasValid.map((k) => k.id) },
+        mataPelajaranId,
+        dihapusPada: null,
+      },
+    });
+    const existingKelasIds = new Set(existingAssigned.map((e) => e.kelasId));
+
+    // 3. Filter kelas yang belum di-assign mapel ini
+    const kelasToAssign = kelasValid.filter((k) => !existingKelasIds.has(k.id));
+
+    if (kelasToAssign.length === 0) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message:
+            "Semua kelas yang dipilih sudah memiliki mata pelajaran ini.",
+        });
+    }
+
+    await prisma.kelasMapel.createMany({
+      data: kelasToAssign.map((k) => ({
+        kelasId: k.id,
+        mataPelajaranId,
+        guruPengajarId,
+        status: "aktif",
+      })),
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: `Berhasil menugaskan guru ke ${kelasToAssign.length} kelas.`,
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
   }
 };

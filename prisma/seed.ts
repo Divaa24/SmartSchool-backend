@@ -377,79 +377,79 @@ async function main() {
 
   // 8.3 Tahun Ajaran
   let tahunAjaran = await prisma.tahunAjaran.findFirst({
-    where: {
-      sekolahId: sekolah.id,
-      nama: "2025/2026",
-      semester: "Ganjil",
-    },
-  });
-  if (!tahunAjaran) {
-    tahunAjaran = await prisma.tahunAjaran.create({
-      data: {
-        sekolahId: sekolah.id,
-        nama: "2025/2026",
-        semester: "Ganjil",
-        status: "aktif",
-      },
-    });
-  }
-  console.log("✅ Tahun Ajaran dummy dibuat");
-
-  // 8.4 Kelas
-  const daftarKelas = [
-    { nama: "XII IPA 1", tingkat: 12 },
-    { nama: "XII IPS 1", tingkat: 12 },
-    { nama: "XI IPA 1", tingkat: 11 },
-    { nama: "XI IPS 1", tingkat: 11 },
-    { nama: "X IPA 1", tingkat: 10 },
-    { nama: "X IPS 1", tingkat: 10 },
-  ];
-
-  const kelasMap: Record<string, any> = {};
-  for (const k of daftarKelas) {
-    let kelas = await prisma.kelas.findFirst({
       where: {
         sekolahId: sekolah.id,
-        tahunAjaranId: tahunAjaran.id,
-        nama: k.nama,
+        tahunAjaran: "2025/2026",
+        semester: "Ganjil",
       },
     });
-    if (!kelas) {
-      kelas = await prisma.kelas.create({
+    if (!tahunAjaran) {
+      tahunAjaran = await prisma.tahunAjaran.create({
         data: {
           sekolahId: sekolah.id,
-          tahunAjaranId: tahunAjaran.id,
-          nama: k.nama,
-          tingkat: k.tingkat,
+          tahunAjaran: "2025/2026",
+          semester: "Ganjil",
+          status: "aktif",
         },
       });
     }
-    kelasMap[k.nama] = kelas;
-  }
-  console.log("✅ Kelas dummy dibuat");
+    console.log("✅ Tahun Ajaran dummy dibuat");
 
-  // 8.5 Mata Pelajaran
-  const daftarMapel = [
-    "Matematika",
-    "Fisika",
-    "Kimia",
-    "Biologi",
-    "Ekonomi",
-    "Geografi",
-    "Sosiologi",
-    "Bahasa Indonesia",
-    "Bahasa Inggris",
-    "Sejarah",
-    "Pendidikan Agama",
-    "Pendidikan Pancasila",
-  ];
+    // 8.4 Kelas
+    const daftarKelas = [
+      { nama: "XII IPA 1", tingkat: 12 },
+      { nama: "XII IPS 1", tingkat: 12 },
+      { nama: "XI IPA 1", tingkat: 11 },
+      { nama: "XI IPS 1", tingkat: 11 },
+      { nama: "X IPA 1", tingkat: 10 },
+      { nama: "X IPS 1", tingkat: 10 },
+    ];
 
-  const mapelMap: Record<string, any> = {};
-  for (const nama of daftarMapel) {
-    const kode = nama.substring(0, 3).toUpperCase();
-    let mapel = await prisma.mataPelajaran.findUnique({
-      where: { kode: kode },
-    });
+    const kelasMap: Record<string, any> = {};
+    for (const k of daftarKelas) {
+      let kelas = await prisma.kelas.findFirst({
+        where: {
+          sekolahId: sekolah.id,
+          tahunAjaranId: tahunAjaran.id,
+          nama: k.nama,
+        },
+      });
+      if (!kelas) {
+        kelas = await prisma.kelas.create({
+          data: {
+            sekolahId: sekolah.id,
+            tahunAjaranId: tahunAjaran.id,
+            nama: k.nama,
+            tingkat: String(k.tingkat),
+          },
+        });
+      }
+      kelasMap[k.nama] = kelas;
+    }
+    console.log("✅ Kelas dummy dibuat");
+
+    // 8.5 Mata Pelajaran
+    const daftarMapel = [
+      "Matematika",
+      "Fisika",
+      "Kimia",
+      "Biologi",
+      "Ekonomi",
+      "Geografi",
+      "Sosiologi",
+      "Bahasa Indonesia",
+      "Bahasa Inggris",
+      "Sejarah",
+      "Pendidikan Agama",
+      "Pendidikan Pancasila",
+    ];
+
+    const mapelMap: Record<string, any> = {};
+    for (const nama of daftarMapel) {
+      const kode = nama.substring(0, 3).toUpperCase();
+      let mapel = await prisma.mataPelajaran.findFirst({
+        where: { kode: kode, sekolahId: sekolah.id },
+      });
     if (!mapel) {
       mapel = await prisma.mataPelajaran.create({
         data: {
@@ -626,13 +626,14 @@ async function main() {
     const existing = await prisma.anggotaKelas.findFirst({
       where: {
         kelasId: kelas.id,
-        siswaId: item.siswa.id,
+        penggunaId: item.siswa.id,
       },
     });
     if (!existing) {
       siswaKelasData.push({
         kelasId: kelas.id,
-        siswaId: item.siswa.id,
+        penggunaId: item.siswa.id,
+        tahunAjaranId: kelas.tahunAjaranId,
       });
     }
   }
@@ -671,14 +672,15 @@ async function main() {
     const existingSiswaKelas = await prisma.anggotaKelas.findFirst({
       where: {
         kelasId: kelasXIIIPA1.id,
-        siswaId: otpTestUser.id,
+        penggunaId: otpTestUser.id,
       },
     });
     if (!existingSiswaKelas) {
       await prisma.anggotaKelas.create({
         data: {
           kelasId: kelasXIIIPA1.id,
-          siswaId: otpTestUser.id,
+          penggunaId: otpTestUser.id,
+          tahunAjaranId: kelasXIIIPA1.tahunAjaranId,
         },
       });
       console.log("✅ Pengguna OTP ditambahkan ke kelas XII IPA 1");

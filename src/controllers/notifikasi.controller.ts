@@ -113,13 +113,13 @@ export const triggerDeadlineH1Notification = async () => {
       t.pengumpulanTugasSiswa.map((p) => p.penggunaId),
     );
     const targetSiswa = t.kelasMapel.kelas.anggota.filter(
-      (a) => !sudahMengumpulkanIds.has(a.siswaId),
+      (a) => !sudahMengumpulkanIds.has(a.penggunaId),
     );
 
     for (const s of targetSiswa) {
       const existNotif = await prisma.notifikasi.findFirst({
         where: {
-          penggunaId: s.siswaId,
+          penggunaId: s.penggunaId,
           kategori: "deadline_tugas",
           targetUrl: `/tugas/${t.id}`,
         },
@@ -128,7 +128,7 @@ export const triggerDeadlineH1Notification = async () => {
       if (!existNotif) {
         await prisma.notifikasi.create({
           data: {
-            penggunaId: s.siswaId,
+            penggunaId: s.penggunaId,
             judul: `Pengingat Deadline: ${t.judul}`,
             isi: `Tugas ${t.kelasMapel.mataPelajaran.nama} akan berakhir dalam waktu kurang dari 24 jam. Segera kumpulkan!`,
             tipe: "warning",

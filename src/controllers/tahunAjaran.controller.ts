@@ -27,7 +27,7 @@ export const getTahunAjaran = async (
         dihapusPada: null,
       },
       orderBy: {
-        nama: "desc",
+        tahunAjaran: "desc",
       },
     });
 
@@ -91,7 +91,7 @@ export const createTahunAjaran = async (
     // Cek apakah tahun ajaran + semester sudah ada
     const existing = await prisma.tahunAjaran.findFirst({
       where: {
-        nama,
+        tahunAjaran: nama,
         semester,
         sekolahId,
         dihapusPada: null,
@@ -121,7 +121,7 @@ export const createTahunAjaran = async (
 
     const data = await prisma.tahunAjaran.create({
       data: {
-        nama,
+        tahunAjaran: nama,
         semester,
         status,
         sekolahId,
@@ -221,7 +221,7 @@ export const updateTahunAjaran = async (
         id,
       },
       data: {
-        ...(nama && { nama }),
+        ...(nama && { tahunAjaran: nama }),
         ...(semester && { semester }),
         ...(status && { status }),
       },

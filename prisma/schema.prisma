@@ -6,59 +6,64 @@ datasource db {
   provider = "postgresql"
 }
 
+// ==========================================
 // 1. SHARED TABLES (Public Schema)
+// ==========================================
 model Pengguna {
-  id             String    @id @default(uuid())
-  sekolahId      String?   @map("sekolah_id")
-  yayasanId      String?   @map("yayasan_id")
-  peranId        String?   @map("peran_id")
-  dibuatOleh     String?   @map("dibuat_oleh")
-  diperbaruiOleh String?   @map("diperbarui_oleh")
-  dihapusOleh    String?   @map("dihapus_oleh")
-  
-  // Data Akun Dasar
-  namaPengguna   String    @unique @map("nama_pengguna") @db.VarChar(50)
-  email          String    @unique @db.VarChar(100)
-  kataSandi      String    @map("kata_sandi") @db.VarChar(255)
-  namaLengkap    String    @map("nama_lengkap") @db.VarChar(100)
-  avatar         String?   @db.VarChar(255)
-  
-  // Identitas Akademik / Pegawai
-  nipd           String?   @db.VarChar(20)
-  nip            String?   @db.VarChar(20)
-  nuptk          String?   @db.VarChar(20)
-  nisn           String?   @unique @db.VarChar(20)
-  nis            String?   @db.VarChar(20)
-  
-  // Tambahan Data Guru / Staff
-  jabatan        String?   @db.VarChar(100)
-  golongan       String?   @db.VarChar(50)
-  
-  // Tambahan Data Lengkap Siswa / Ortu
-  nik            String?   @unique @db.VarChar(20)
-  namaAyah       String?   @map("nama_ayah") @db.VarChar(100)
-  pekerjaanAyah  String?   @map("pekerjaan_ayah") @db.VarChar(100)
-  namaIbu        String?   @map("nama_ibu") @db.VarChar(100)
-  pekerjaanIbu   String?   @map("pekerjaan_ibu") @db.VarChar(100)
-  alamatKtp      String?   @map("alamat_ktp") @db.Text
-  alamatDomisili String?   @map("alamat_domisili") @db.Text
-  kecamatan      String?   @db.VarChar(100)
-  kelurahan      String?   @db.VarChar(100)
-  kota           String?   @db.VarChar(100)
+  id             String  @id @default(uuid())
+  sekolahId      String? @map("sekolah_id")
+  yayasanId      String? @map("yayasan_id")
+  peranId        String? @map("peran_id")
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
 
-  // Data Personal
-  jenisKelamin   String?   @map("jenis_kelamin") @db.VarChar(10)
-  tempatLahir    String?   @map("tempat_lahir") @db.VarChar(50)
-  tanggalLahir   DateTime? @map("tanggal_lahir") @db.Date
-  alamat         String?   @db.Text
-  noTelepon      String?   @map("no_telepon") @db.VarChar(20)
-  
-  // Status & Auth
-  status         String?   @db.VarChar(20)
-  terakhirLogin  DateTime? @map("terakhir_login") @db.Timestamp()
-  kodeOtp        String?   @map("kode_otp") @db.VarChar(10)
-  otpTimeout     DateTime? @map("otp_timeout") @db.Timestamp()
-  
+  namaPengguna String  @unique @map("nama_pengguna") @db.VarChar(50)
+  email        String  @unique @db.VarChar(100)
+  kataSandi    String  @map("kata_sandi") @db.VarChar(255)
+  namaLengkap  String  @map("nama_lengkap") @db.VarChar(100)
+  avatar       String? @db.VarChar(255)
+
+  nipd     String? @db.VarChar(20)
+  nip      String? @db.VarChar(20)
+  nuptk    String? @db.VarChar(20)
+  nisn     String? @unique @db.VarChar(20)
+  nis      String? @db.VarChar(20)
+  jabatan  String? @db.VarChar(100)
+  golongan String? @db.VarChar(50)
+
+  nik           String?   @unique @db.VarChar(20)
+  alamatKtp     String?   @map("alamat_ktp") @db.Text
+  jenisKelamin  String?   @map("jenis_kelamin") @db.VarChar(10)
+  tempatLahir   String?   @map("tempat_lahir") @db.VarChar(50)
+  tanggalLahir  DateTime? @map("tanggal_lahir") @db.Date
+  provinsi      String?   @db.VarChar(50)
+  kotaKabupaten String?   @map("kota_kabupaten") @db.VarChar(50)
+  kecamatan     String?   @db.VarChar(50)
+  kelurahan     String?   @db.VarChar(50)
+  kodePos       String?   @map("kode_pos") @db.VarChar(10)
+  alamat        String?   @db.Text
+
+  namaAyah      String? @map("nama_ayah") @db.VarChar(100)
+  nikAyah       String? @map("nik_ayah") @db.VarChar(20)
+  pekerjaanAyah String? @map("pekerjaan_ayah") @db.VarChar(50)
+  noHpAyah      String? @map("no_hp_ayah") @db.VarChar(20)
+
+  namaIbu      String? @map("nama_ibu") @db.VarChar(100)
+  nikIbu       String? @map("nik_ibu") @db.VarChar(20)
+  pekerjaanIbu String? @map("pekerjaan_ibu") @db.VarChar(50)
+  noHpIbu      String? @map("no_hp_ibu") @db.VarChar(20)
+
+  alamatDomisili       String?  @map("alamat_domisili") @db.Text
+  alamatSesuaiDomisili Boolean? @default(true) @map("alamat_sesuai_domisili")
+  noTeleponRumah       String?  @map("no_telepon_rumah") @db.VarChar(20)
+  namaWaliPesertaDidik String?  @map("nama_wali_peserta_didik") @db.VarChar(20)
+
+  status        String?   @db.VarChar(20)
+  terakhirLogin DateTime? @map("terakhir_login") @db.Timestamp()
+  kodeOtp       String?   @map("kode_otp") @db.VarChar(10)
+  otpTimeout    DateTime? @map("otp_timeout") @db.Timestamp()
+
   dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
@@ -71,17 +76,14 @@ model Pengguna {
   kelasMapelDiajar      KelasMapel[]       @relation("GuruPengajar")
   nilaiSiswa            Nilai[]
   absensiSiswa          Absensi[]
-  percobaanUjianSiswa   PercobaanUjian[]
   pengumpulanTugasSiswa PengumpulanTugas[]
   pendaftaranPpdb       PendaftaranPpdb[]
   kelasSiswa            AnggotaKelas[]     @relation("SiswaKelas")
   notifikasiDiterima    Notifikasi[]       @relation("PenerimaNotifikasi")
   notifikasiDikirim     Notifikasi[]       @relation("PengirimNotifikasi")
   auditLogs             AuditLog[]
-
-  // Relasi LMS
-  kuisDibuat    Kuis[]          @relation("PembuatKuis")
-  sesiKuisSiswa SesiKuisSiswa[]
+  percobaanAsesmen      PercobaanAsesmen[]
+  biometrikWajah        BiometrikWajah?
 
   @@map("pengguna")
 }
@@ -143,32 +145,30 @@ model PeranIzin {
 model Sekolah {
   id               String  @id @default(uuid())
   yayasanId        String? @map("yayasan_id")
-  langgananAktifId String? @map("langganan_aktif_id")
+  langgananAktifId String? @unique @map("langganan_aktif_id")
   dibuatOleh       String? @map("dibuat_oleh")
   diperbaruiOleh   String? @map("diperbarui_oleh")
   dihapusOleh      String? @map("dihapus_oleh")
+  npsn             String? @unique @map("npsn") @db.VarChar(50)
   nama             String  @db.VarChar(100)
   subdomain        String  @unique @db.VarChar(50)
+  alamat           String? @db.Text
+  telepon          String? @db.VarChar(20)
+  email            String? @db.VarChar(100)
   kode             String  @unique @db.VarChar(20)
-  jenjang          String  @db.VarChar(20)
 
-  // Kontak & Detail
-  alamat         String?   @db.Text
-  telepon        String?   @db.VarChar(20)
-  email          String?   @db.VarChar(100)
-  logo           String?   @db.VarChar(255)
-  
-  // Konfigurasi Tambahan (CMS, Absensi, Koordinat)
-  latitude           Float?
-  longitude          Float?
-  radiusAbsensi      Int?      @default(50)
-  metodeAbsensiAktif String[] 
-  logoBesarUrl       String?   @map("logo_besar_url") @db.VarChar(255)
-  logoKecilUrl       String?   @map("logo_kecil_url") @db.VarChar(255)
-  faviconUrl         String?   @map("favicon_url") @db.VarChar(255)
+  logoBesarUrl String? @map("logo_besar_url") @db.VarChar(255)
+  logoKecilUrl String? @map("logo_kecil_url") @db.VarChar(255)
+  faviconUrl   String? @map("favicon_url") @db.VarChar(255)
+  status       String? @db.VarChar(20)
+  jenjang      String? @db.VarChar(20)
+  konfigurasi  Json?
 
-  status         String?   @db.VarChar(20)
-  konfigurasi    Json?
+  lintang            Decimal? @db.Decimal(10, 8)
+  bujur              Decimal? @db.Decimal(11, 8)
+  radiusAbsensi      Int?     @map("radius_absensi")
+  metodeAbsensiAktif String[] @map("metode_absensi_aktif")
+
   dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
@@ -184,16 +184,12 @@ model Sekolah {
   artikelCms        ArtikelCms[]
   jalurPpdb         JalurPpdb[]
   pendaftaranPpdb   PendaftaranPpdb[]
-  langgananSekolah  LanggananSekolah[]
+  langgananSekolah  LanggananSekolah[]  @relation("SekolahLangganan")
   riwayatPembayaran RiwayatPembayaran[]
-  
-  // Infrastruktur & CMS
   gedung            Gedung[]
   auditLogs         AuditLog[]
-  sectionBeranda    SectionBeranda[]
-
-  // Relasi LMS
-  kuis Kuis[]
+  pengaturanSistem  PengaturanSistem[]
+  menuKonfigurasi   MenuKonfigurasi[]
 
   @@map("sekolah")
 }
@@ -203,18 +199,19 @@ model Yayasan {
   dibuatOleh     String?   @map("dibuat_oleh")
   diperbaruiOleh String?   @map("diperbarui_oleh")
   dihapusOleh    String?   @map("dihapus_oleh")
+  npyp           String?   @unique @db.VarChar(50)
   nama           String    @db.VarChar(100)
   alamat         String?   @db.Text
   telepon        String?   @db.VarChar(20)
   email          String?   @db.VarChar(100)
-  npyp           String?   @unique @db.VarChar(50)
-  status         String?   @db.VarChar(20)
+  status         String?   @default("aktif") @db.VarChar(20)
   dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
-  sekolah  Sekolah[]
-  pengguna Pengguna[]
+  sekolah           Sekolah[]
+  pengguna          Pengguna[]
+  pendaftaranTenant PendaftaranTenant[]
 
   @@map("yayasan")
 }
@@ -233,8 +230,9 @@ model Paket {
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
-  paketModul       PaketModul[]
-  langgananSekolah LanggananSekolah[]
+  paketModul        PaketModul[]
+  langgananSekolah  LanggananSekolah[]
+  pendaftaranTenant PendaftaranTenant[]
 
   @@map("paket")
 }
@@ -312,12 +310,12 @@ model LanggananSekolah {
   hargaSaatBerlangganan Decimal?  @map("harga_saat_berlangganan") @db.Decimal(15, 2)
   siklusPenagihan       String?   @map("siklus_penagihan") @db.VarChar(20)
   fiturAktif            Json?     @map("fitur_aktif")
-  midtransOrderId       String?   @map("midtrans_order_id") @db.VarChar(100)
+  midtransInvoiceId     String?   @map("midtrans_invoice_id") @db.VarChar(100)
   midtransPaymentLink   String?   @map("midtrans_payment_link") @db.VarChar(255)
   dibuatPada            DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
   diperbaruiPada        DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
 
-  sekolah           Sekolah?            @relation(fields: [sekolahId], references: [id])
+  sekolah           Sekolah             @relation("SekolahLangganan", fields: [sekolahId], references: [id])
   paket             Paket               @relation(fields: [paketId], references: [id])
   riwayatPembayaran RiwayatPembayaran[]
 
@@ -325,19 +323,21 @@ model LanggananSekolah {
 }
 
 model RiwayatPembayaran {
-  id                    String   @id @default(uuid())
-  langgananSekolahId    String   @map("langganan_sekolah_id")
-  sekolahId             String   @map("sekolah_id")
-  dibuatOleh            String?  @map("dibuat_oleh")
-  diperbaruiOleh        String?  @map("diperbarui_oleh")
-  dihapusOleh           String?  @map("dihapus_oleh")
-  jumlah                Decimal? @db.Decimal(15, 2)
-  metode                String?  @db.VarChar(50)
-  status                String?  @db.VarChar(20)
-  midtransTransactionId String?  @map("midtrans_transaction_id") @db.VarChar(100)
-  midtransOrderId       String?  @map("midtrans_order_id") @db.VarChar(100)
-  webhookRawPayload     Json?    @map("webhook_raw_payload")
-  dibuatPada            DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
+  id                 String   @id @default(uuid())
+  langgananSekolahId String   @map("langganan_sekolah_id")
+  sekolahId          String   @map("sekolah_id")
+  dibuatOleh         String?  @map("dibuat_oleh")
+  diperbaruiOleh     String?  @map("diperbarui_oleh")
+  dihapusOleh        String?  @map("dihapus_oleh")
+  sumberTagihan      String?  @map("sumber_tagihan") @db.VarChar(50)
+  jumlah             Decimal? @db.Decimal(15, 2)
+  metode             String?  @db.VarChar(50)
+  status             String?  @db.VarChar(20)
+  midtransPaymentId  String?  @map("midtrans_payment_id") @db.VarChar(100)
+  midtransInvoiceId  String?  @map("midtrans_invoice_id") @db.VarChar(100)
+  webhookRawPayload  Json?    @map("webhook_raw_payload")
+  dibuatPada         DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
+  dihapusPada        DateTime? @map("dihapus_pada") @db.Timestamp()
 
   langgananSekolah LanggananSekolah @relation(fields: [langgananSekolahId], references: [id])
   sekolah          Sekolah?         @relation(fields: [sekolahId], references: [id])
@@ -365,62 +365,185 @@ model Notifikasi {
   @@map("notifikasi")
 }
 
+model PendaftaranTenant {
+  id                 String @id @default(uuid())
+  namaPendaftar      String @map("nama_pendaftar") @db.VarChar(100)
+  emailPendaftar     String @map("email_pendaftar") @db.VarChar(100)
+  kataSandiPendaftar String @map("kata_sandi_pendaftar") @db.VarChar(255)
+
+  namaYayasan    String? @map("nama_yayasan") @db.VarChar(100)
+  alamatYayasan  String? @map("alamat_yayasan") @db.Text
+  teleponYayasan String? @map("telepon_yayasan") @db.VarChar(20)
+  emailYayasan   String? @map("email_yayasan") @db.VarChar(100)
+  npypYayasan    String? @map("npyp_yayasan") @db.VarChar(50)
+
+  namaSekolah    String  @map("nama_sekolah") @db.VarChar(100)
+  jenjangSekolah String  @map("jenjang_sekolah") @db.VarChar(20)
+  subdomain      String  @db.VarChar(50)
+  alamatSekolah  String  @map("alamat_sekolah") @db.Text
+  teleponSekolah String  @map("telepon_sekolah") @db.VarChar(20)
+  emailSekolah   String  @map("email_sekolah") @db.VarChar(100)
+  logoSekolah    String? @map("logo_sekolah") @db.VarChar(255)
+
+  paketId         String    @map("paket_id")
+  midtransOrderId String?   @map("midtrans_order_id") @db.VarChar(100)
+  kodeOtp         String?   @map("kode_otp") @db.VarChar(10)
+  otpTimeout      DateTime? @map("otp_timeout") @db.Timestamp()
+  status          String    @default("menunggu_verifikasi") @db.VarChar(20)
+
+  yayasanTerbuatId  String? @unique @map("yayasan_terbuat_id")
+  sekolahTerbuatId  String? @unique @map("sekolah_terbuat_id")
+  penggunaTerbuatId String? @unique @map("pengguna_terbuat_id")
+
+  dikonversiPada DateTime? @map("dikonversi_pada") @db.Timestamp()
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+
+  paket   Paket    @relation(fields: [paketId], references: [id])
+  yayasan Yayasan? @relation(fields: [yayasanTerbuatId], references: [id])
+
+  @@map("pendaftaran_tenant")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  penggunaId String   @map("pengguna_id")
+  sekolahId  String?  @map("sekolah_id") // Biarkan opsional untuk log global
+  aksi       String   @db.VarChar(50)
+  modul      String   @db.VarChar(50)
+  entitasId  String?  @map("entitas_id") @db.VarChar(50)
+  dataLama   Json?    @map("data_lama")
+  dataBaru   Json?    @map("data_baru")
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  userAgent  String?  @map("user_agent") @db.VarChar(255)
+  waktu      DateTime @default(now()) @db.Timestamp()
+
+  pengguna Pengguna @relation(fields: [penggunaId], references: [id])
+  sekolah  Sekolah? @relation(fields: [sekolahId], references: [id])
+
+  @@map("audit_log")
+}
+
+model PengaturanSistem {
+  id             String  @id @default(uuid())
+  sekolahId      String? @map("sekolah_id")
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
+
+  kunci      String  @db.VarChar(100)
+  nilai      String  @db.Text
+  tipeData   String  @map("tipe_data") @db.VarChar(20)
+  kelompok   String  @db.VarChar(20)
+  keterangan String? @db.Text
+
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  sekolah Sekolah? @relation(fields: [sekolahId], references: [id])
+
+  @@map("pengaturan_sistem")
+}
+
+model MenuKonfigurasi {
+  id             String  @id @default(uuid())
+  sekolahId      String  @map("sekolah_id")
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
+
+  halaman   String  @db.VarChar(50)
+  section   String  @db.VarChar(50)
+  judul     String  @db.VarChar(100)
+  subJudul  String? @map("sub_judul") @db.VarChar(255)
+  konten    String? @db.Text
+  gambarUrl String? @map("gambar_url") @db.VarChar(255)
+  ctaText   String? @map("cta_text") @db.VarChar(50)
+  ctaLink   String? @map("cta_link") @db.VarChar(255)
+  urutan    Int
+  status    String? @db.VarChar(20)
+
+  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+
+  sekolah Sekolah @relation(fields: [sekolahId], references: [id])
+
+  @@map("menu_konfigurasi")
+}
+
+// ==========================================
 // 2. TENANT TABLES (Per Sekolah)
+// ==========================================
 model TahunAjaran {
-  id             String    @id @default(uuid())
-  nama           String    @db.VarChar(50) 
-  semester       String    @db.VarChar(20) 
-  status         String    @default("tidak_aktif") @db.VarChar(20) 
-  sekolahId      String    @map("sekolah_id")
-  
-  sekolah        Sekolah   @relation(fields: [sekolahId], references: [id])
-  kelas          Kelas[]
-  dibuatPada     DateTime  @default(now()) @map("dibuat_pada")
-  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada")
-  dihapusPada    DateTime? @map("dihapus_pada")
+  id             String  @id @default(uuid())
+  sekolahId      String  @map("sekolah_id")
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
+
+  tahunAjaran    String    @map("tahun_ajaran") @db.VarChar(20)
+  semester       String    @db.VarChar(10)
+  tanggalMulai   DateTime? @map("tanggal_mulai") @db.Date
+  tanggalSelesai DateTime? @map("tanggal_selesai") @db.Date
+  status         String    @default("tidak_aktif") @db.VarChar(20)
+
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  sekolah Sekolah @relation(fields: [sekolahId], references: [id])
+  kelas   Kelas[]
 
   @@map("tahun_ajaran")
 }
 
 model Kelas {
-  id             String         @id @default(uuid())
-  nama           String         @db.VarChar(50)
-  tingkat        Int
-  kapasitas      Int?           @default(30)
-  fotoKelasUrl   String?        @map("foto_kelas_url") @db.VarChar(255)
-  
-  sekolahId      String         @map("sekolah_id")
-  sekolah        Sekolah        @relation(fields: [sekolahId], references: [id])
-  
-  waliKelasId    String?        @map("wali_kelas_id")
-  waliKelas      Pengguna?      @relation("WaliKelas", fields: [waliKelasId], references: [id])
-  
-  tahunAjaranId  String         @map("tahun_ajaran_id")
-  tahunAjaran    TahunAjaran    @relation(fields: [tahunAjaranId], references: [id])
-  
-  lantaiId       String?        @map("lantai_id")
-  lantai         Lantai?        @relation(fields: [lantaiId], references: [id])
+  id             String  @id @default(uuid())
+  sekolahId      String  @map("sekolah_id")
+  tahunAjaranId  String  @map("tahun_ajaran_id")
+  waliKelasId    String? @map("wali_kelas_id")
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
 
-  anggota        AnggotaKelas[]
-  kelasMapel     KelasMapel[]
-  absensi        Absensi[]
+  gedungId     String? @map("gedung_id")
+  lantaiId     String? @map("lantai_id")
+  fotoKelas    String? @map("foto_kelas") @db.VarChar(255)
+  nama         String  @db.VarChar(50)
+  tingkat      String  @db.VarChar(20)
+  nomorRuangan String? @map("nomor_ruangan") @db.VarChar(20)
+  kapasitas    Int?    @default(30)
+  status       String? @db.VarChar(20)
 
-  dibuatPada     DateTime       @default(now()) @map("dibuat_pada")
-  diperbaruiPada DateTime       @updatedAt @map("diperbarui_pada")
-  dihapusPada    DateTime?      @map("dihapus_pada")
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  sekolah     Sekolah     @relation(fields: [sekolahId], references: [id])
+  waliKelas   Pengguna?   @relation("WaliKelas", fields: [waliKelasId], references: [id])
+  tahunAjaran TahunAjaran @relation(fields: [tahunAjaranId], references: [id])
+  gedung      Gedung?     @relation(fields: [gedungId], references: [id])
+  lantai      Lantai?     @relation(fields: [lantaiId], references: [id])
+
+  anggota    AnggotaKelas[]
+  kelasMapel KelasMapel[]
+  absensi    Absensi[]
 
   @@map("kelas")
 }
 
 model MataPelajaran {
-  id             String    @id @default(uuid())
-  sekolahId      String    @map("sekolah_id")
-  dibuatOleh     String?   @map("dibuat_oleh")
-  diperbaruiOleh String?   @map("diperbarui_oleh")
-  dihapusOleh    String?   @map("dihapus_oleh")
-  nama           String    @db.VarChar(100)
-  kode           String    @unique @db.VarChar(20)
-  status         String?   @db.VarChar(20)
+  id             String  @id @default(uuid())
+  sekolahId      String  @map("sekolah_id")
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
+
+  nama   String  @db.VarChar(100)
+  kode   String  @db.VarChar(20)
+  status String? @db.VarChar(20)
+
   dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
@@ -430,7 +553,6 @@ model MataPelajaran {
 
   @@map("mata_pelajaran")
 }
-
 
 model KelasMapel {
   id              String    @id @default(uuid())
@@ -443,15 +565,15 @@ model KelasMapel {
   status          String?   @db.VarChar(20)
   dibuatPada      DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
   diperbaruiPada  DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
-  dihapusPada     DateTime? @map("dihapus_pada") @db.Timestamp() // <-- Tambahkan baris ini
+  dihapusPada     DateTime? @map("dihapus_pada") @db.Timestamp()
 
   kelas         Kelas         @relation(fields: [kelasId], references: [id])
   mataPelajaran MataPelajaran @relation(fields: [mataPelajaranId], references: [id])
   guruPengajar  Pengguna      @relation("GuruPengajar", fields: [guruPengajarId], references: [id])
-  
+
   komponenNilai      KomponenNilai[]
   nilai              Nilai[]
-  ujian              Ujian[]
+  asesmen            Asesmen[]
   tugas              Tugas[]
   materiPembelajaran MateriPembelajaran[]
   jadwalMengajar     JadwalMengajar[]
@@ -460,14 +582,22 @@ model KelasMapel {
 }
 
 model AnggotaKelas {
-  id         String   @id @default(uuid())
-  kelasId    String   @map("kelas_id")
-  kelas      Kelas    @relation(fields: [kelasId], references: [id])
-  siswaId    String   @map("siswa_id")
-  siswa      Pengguna @relation("SiswaKelas", fields: [siswaId], references: [id])
-  dibuatPada DateTime @default(now()) @map("dibuat_pada")
+  id             String  @id @default(uuid())
+  kelasId        String  @map("kelas_id")
+  penggunaId     String  @map("pengguna_id")
+  tahunAjaranId  String  @map("tahun_ajaran_id")
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
+  status         String? @db.VarChar(20)
 
-  @@unique([kelasId, siswaId])
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  kelas Kelas    @relation(fields: [kelasId], references: [id])
+  siswa Pengguna @relation("SiswaKelas", fields: [penggunaId], references: [id])
+
   @@map("anggota_kelas")
 }
 
@@ -515,150 +645,175 @@ model Nilai {
 }
 
 model Absensi {
-  id             String   @id @default(uuid())
-  penggunaId     String   @map("pengguna_id")
-  kelasId        String   @map("kelas_id")
-  dibuatOleh     String?  @map("dibuat_oleh")
-  diperbaruiOleh String?  @map("diperbarui_oleh")
-  dihapusOleh    String?  @map("dihapus_oleh")
-  tanggal        DateTime @db.Date
-  status         String   @db.VarChar(10)
-  keterangan     String?  @db.Text
-  metode         String?  @db.VarChar(20)
-  lintang        Decimal? @db.Decimal(10, 8)
-  bujur          Decimal? @db.Decimal(11, 8)
-  urlFoto        String?  @map("url_foto") @db.VarChar(255)
-  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  id               String   @id @default(uuid())
+  penggunaId       String   @map("pengguna_id")
+  biometrikWajahId String?  @map("biometrik_wajah_id")
+  kelasId          String   @map("kelas_id")
+  dibuatOleh       String?  @map("dibuat_oleh")
+  diperbaruiOleh   String?  @map("diperbarui_oleh")
+  dihapusOleh      String?  @map("dihapus_oleh")
+  tanggal          DateTime @db.Date
+  status           String   @db.VarChar(10)
+  keterangan       String?  @db.Text
+  metode           String?  @db.VarChar(20)
+  lintang          Decimal? @db.Decimal(10, 8)
+  bujur            Decimal? @db.Decimal(11, 8)
+  urlFoto          String?  @map("url_foto") @db.VarChar(255)
+  skorKemiripan    Decimal? @map("skor_kemiripan") @db.Decimal(5, 4)
+  dibuatPada       DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada   DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
 
-  pengguna Pengguna @relation(fields: [penggunaId], references: [id])
-  kelas    Kelas    @relation(fields: [kelasId], references: [id])
+  pengguna       Pengguna        @relation(fields: [penggunaId], references: [id])
+  kelas          Kelas           @relation(fields: [kelasId], references: [id])
+  biometrikWajah BiometrikWajah? @relation(fields: [biometrikWajahId], references: [id])
 
   @@map("absensi")
 }
 
-model Ujian {
-  id                String    @id @default(uuid())
-  kelasMapelId      String    @map("kelas_mapel_id")
-  dibuatOleh        String?   @map("dibuat_oleh")
-  diperbaruiOleh    String?   @map("diperbarui_oleh")
-  dihapusOleh       String?   @map("dihapus_oleh")
+model BiometrikWajah {
+  id               String    @id @default(uuid())
+  penggunaId       String    @unique @map("pengguna_id")
+  dibuatOleh       String?   @map("dibuat_oleh")
+  diperbaruiOleh   String?   @map("diperbarui_oleh")
+  dihapusOleh      String?   @map("dihapus_oleh")
+  embeddingVector  Json?     @map("embedding_vector") // Fallback to JSON if pgvector not used
+  urlFotoReferensi String?   @map("url_foto_referensi") @db.VarChar(255)
+  perangkat        String?   @db.VarChar(50)
+  status           String?   @db.VarChar(20)
+  dibuatPada       DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada   DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada      DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  pengguna Pengguna  @relation(fields: [penggunaId], references: [id])
+  absensi  Absensi[]
+
+  @@map("biometrik_wajah")
+}
+
+// ==========================================
+// 3. LMS & ASESMEN TABLES
+// ==========================================
+model Asesmen {
+  id             String  @id @default(uuid())
+  kelasMapelId   String  @map("kelas_mapel_id")
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
+
   judul             String    @db.VarChar(100)
   deskripsi         String?   @db.Text
-  jenis             String    @db.VarChar(20)
+  tipe              String    @db.VarChar(20)
   durasi            Int
   waktuMulai        DateTime? @map("waktu_mulai") @db.Timestamp()
   waktuSelesai      DateTime? @map("waktu_selesai") @db.Timestamp()
   nilaiKelulusan    Decimal?  @map("nilai_kelulusan") @db.Decimal(5, 2)
   dipublikasikan    Boolean   @default(false)
-  modeUjian         String?   @map("mode_ujian") @db.VarChar(20)
+  modeAsesmen       String?   @map("mode_asesmen") @db.VarChar(20)
   penilaianOtomatis Boolean   @default(true) @map("penilaian_otomatis")
-  dibuatPada        DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada    DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
 
-  kelasMapel     KelasMapel       @relation(fields: [kelasMapelId], references: [id])
-  soalUjian      SoalUjian[]
-  percobaanUjian PercobaanUjian[]
-
-  @@map("ujian")
-}
-
-model SoalUjian {
-  id             String   @id @default(uuid())
-  ujianId        String   @map("ujian_id")
-  dibuatOleh     String?  @map("dibuat_oleh")
-  diperbaruiOleh String?  @map("diperbarui_oleh")
-  dihapusOleh    String?  @map("dihapus_oleh")
-  teksSoal       String   @map("teks_soal") @db.Text
-  jenisSoal      String   @map("jenis_soal") @db.VarChar(20)
-  pilihan        Json?
-  jawabanBenar   String?  @map("jawaban_benar") @db.Text
-  poin           Decimal  @db.Decimal(5, 2)
-  nomorUrut      Int      @map("nomor_urut")
-  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
-
-  ujian Ujian @relation(fields: [ujianId], references: [id])
-
-  @@map("soal_ujian")
-}
-
-model PercobaanUjian {
-  id             String    @id @default(uuid())
-  ujianId        String    @map("ujian_id")
-  penggunaId     String    @map("pengguna_id")
-  dibuatOleh     String?   @map("dibuat_oleh")
-  diperbaruiOleh String?   @map("diperbarui_oleh")
-  dihapusOleh    String?   @map("dihapus_oleh")
-  dimulaiPada    DateTime  @map("dimulai_pada") @db.Timestamp()
-  selesaiPada    DateTime? @map("selesai_pada") @db.Timestamp()
-  nilai          Decimal?  @db.Decimal(5, 2)
-  status         String?   @db.VarChar(20)
   dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
-  ujian        Ujian          @relation(fields: [ujianId], references: [id])
-  pengguna     Pengguna       @relation(fields: [penggunaId], references: [id])
-  jawabanUjian JawabanUjian[]
-  hasilUjian   HasilUjian?
+  kelasMapel       KelasMapel         @relation(fields: [kelasMapelId], references: [id])
+  soalAsesmen      SoalAsesmen[]
+  percobaanAsesmen PercobaanAsesmen[]
 
-  @@map("percobaan_ujian")
+  @@map("asesmen")
 }
 
-model JawabanUjian {
-  id               String   @id @default(uuid())
-  percobaanUjianId String   @map("percobaan_ujian_id")
-  soalId           String   @map("soal_id")
-  dibuatOleh       String?  @map("dibuat_oleh")
-  diperbaruiOleh   String?  @map("diperbarui_oleh")
-  dihapusOleh      String?  @map("dihapus_oleh")
-  jawaban          String?  @db.Text
-  nilai            Decimal? @db.Decimal(5, 2)
-  benar            Boolean?
-  dibuatPada       DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada   DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+model SoalAsesmen {
+  id             String  @id @default(uuid())
+  asesmenId      String  @map("asesmen_id")
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
 
-  percobaanUjian   PercobaanUjian @relation(fields: [percobaanUjianId], references: [id])
+  teksSoal     String  @map("teks_soal") @db.Text
+  jenisSoal    String  @map("jenis_soal") @db.VarChar(20)
+  pilihan      Json?
+  kunciJawaban String? @map("kunci_jawaban") @db.Text
+  poin         Decimal @db.Decimal(5, 2)
+  nomorUrut    Int     @map("nomor_urut")
 
-  @@map("jawaban_ujian")
+  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  asesmen        Asesmen          @relation(fields: [asesmenId], references: [id])
+  jawabanAsesmen JawabanAsesmen[]
+
+  @@map("soal_asesmen")
 }
 
-model JawabanSiswa {
-  id              String   @id @default(uuid())
-  sesiKuisSiswaId String   @map("sesi_kuis_siswa_id")
-  soalId          String   @map("soal_id")
-  jawaban         String   @db.Text
-  nilaiDiperoleh  Float?   @map("nilai_diperoleh")
-  catatanGuru     String?  @map("catatan_guru") @db.Text
-  dibuatPada      DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada  DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+model PercobaanAsesmen {
+  id             String  @id @default(uuid())
+  asesmenId      String  @map("asesmen_id")
+  siswaId        String  @map("siswa_id")
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
 
-  sesiKuisSiswa SesiKuisSiswa @relation(fields: [sesiKuisSiswaId], references: [id], onDelete: Cascade)
-  soal          Soal          @relation(fields: [soalId], references: [id], onDelete: Cascade)
+  dimulaiPada DateTime  @map("dimulai_pada") @db.Timestamp()
+  selesaiPada DateTime? @map("selesai_pada") @db.Timestamp()
+  nilai       Decimal?  @db.Decimal(5, 2)
+  status      String?   @db.VarChar(20)
 
-  @@unique([sesiKuisSiswaId, soalId])
-  @@index([sesiKuisSiswaId])
-  @@index([soalId])
-  @@map("jawaban_siswa")
+  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  asesmen        Asesmen          @relation(fields: [asesmenId], references: [id])
+  pengguna       Pengguna         @relation(fields: [siswaId], references: [id])
+  jawabanAsesmen JawabanAsesmen[]
+  hasilAsesmen   HasilAsesmen?
+
+  @@map("percobaan_asesmen")
 }
 
-model HasilUjian {
-  id               String   @id @default(uuid())
-  percobaanUjianId String   @unique @map("percobaan_ujian_id")
-  dibuatOleh       String?  @map("dibuat_oleh")
-  diperbaruiOleh   String?  @map("diperbarui_oleh")
-  dihapusOleh      String?  @map("dihapus_oleh")
-  totalNilai       Decimal  @map("total_nilai") @db.Decimal(5, 2)
-  jumlahBenar      Int      @map("jumlah_benar")
-  jumlahSalah      Int      @map("jumlah_salah")
-  jumlahLewati     Int      @map("jumlah_lewati")
-  detail           Json?
-  dibuatPada       DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada   DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+model JawabanAsesmen {
+  id                 String  @id @default(uuid())
+  percobaanAsesmenId String  @map("percobaan_asesmen_id")
+  soalId             String  @map("soal_id")
+  dibuatOleh         String? @map("dibuat_oleh")
+  diperbaruiOleh     String? @map("diperbarui_oleh")
+  dihapusOleh        String? @map("dihapus_oleh")
 
-  percobaanUjian PercobaanUjian @relation(fields: [percobaanUjianId], references: [id])
+  jawaban     String?  @db.Text
+  nilai       Decimal? @db.Decimal(5, 2)
+  catatanGuru String?  @map("catatan_guru") @db.Text
+  benar       Boolean?
 
-  @@map("hasil_ujian")
+  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  percobaanAsesmen PercobaanAsesmen @relation(fields: [percobaanAsesmenId], references: [id])
+  soalAsesmen      SoalAsesmen      @relation(fields: [soalId], references: [id])
+
+  @@map("jawaban_asesmen")
+}
+
+model HasilAsesmen {
+  id                 String  @id @default(uuid())
+  percobaanAsesmenId String  @unique @map("percobaan_asesmen_id")
+  dibuatOleh         String? @map("dibuat_oleh")
+  diperbaruiOleh     String? @map("diperbarui_oleh")
+  dihapusOleh        String? @map("dihapus_oleh")
+
+  totalNilai   Decimal @map("total_nilai") @db.Decimal(5, 2)
+  jumlahBenar  Int     @map("jumlah_benar")
+  jumlahSalah  Int     @map("jumlah_salah")
+  jumlahLewati Int     @map("jumlah_lewati")
+  detail       Json?
+
+  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  percobaanAsesmen PercobaanAsesmen @relation(fields: [percobaanAsesmenId], references: [id])
+
+  @@map("hasil_asesmen")
 }
 
 model Tugas {
@@ -674,7 +829,7 @@ model Tugas {
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
-  kelasMapel KelasMapel @relation(fields: [kelasMapelId], references: [id])
+  kelasMapel            KelasMapel         @relation(fields: [kelasMapelId], references: [id])
   pengumpulanTugasSiswa PengumpulanTugas[]
 
   @@map("tugas")
@@ -720,18 +875,79 @@ model MateriPembelajaran {
 
   kelasMapel KelasMapel @relation(fields: [kelasMapelId], references: [id])
 
-  @@index([kelasMapelId])
   @@map("materi_pembelajaran")
 }
 
+// ==========================================
+// 4. INFRASTRUKTUR & ASET
+// ==========================================
+model Gedung {
+  id         String  @id @default(uuid())
+  sekolahId  String  @map("sekolah_id")
+  nama       String  @db.VarChar(100)
+  kode       String? @db.VarChar(20)
+  fotoGedung String? @map("foto_gedung") @db.VarChar(255)
+  status     String? @db.VarChar(20)
+
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  sekolah Sekolah  @relation(fields: [sekolahId], references: [id])
+  lantai  Lantai[]
+  kelas   Kelas[]
+
+  @@map("gedung")
+}
+
+model Lantai {
+  id          String  @id @default(uuid())
+  gedungId    String  @map("gedung_id")
+  nama        String  @db.VarChar(50)
+  nomorLantai Int?    @map("nomor_lantai")
+  fotoLantai  String? @map("foto_lantai") @db.VarChar(255)
+  status      String? @db.VarChar(20)
+
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  gedung Gedung  @relation(fields: [gedungId], references: [id])
+  kelas  Kelas[]
+
+  @@map("lantai")
+}
+
+model JadwalMengajar {
+  id             String  @id @default(uuid())
+  kelasMapelId   String  @map("kelas_mapel_id")
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
+
+  hari       String  @db.VarChar(20)
+  jamMulai   String  @map("jam_mulai") @db.VarChar(5)
+  jamSelesai String  @map("jam_selesai") @db.VarChar(5)
+  ruangan    String? @db.VarChar(100)
+
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  kelasMapel KelasMapel @relation(fields: [kelasMapelId], references: [id])
+
+  @@map("jadwal_mengajar")
+}
+
 model Aset {
-  id                 String    @id @default(uuid())
-  sekolahId          String    @map("sekolah_id")
-  kategoriAsetId     String    @map("kategori_aset_id")
-  gudangId           String    @map("gudang_id")
-  dibuatOleh         String?   @map("dibuat_oleh")
-  diperbaruiOleh     String?   @map("diperbarui_oleh")
-  dihapusOleh        String?   @map("dihapus_oleh")
+  id             String  @id @default(uuid())
+  sekolahId      String  @map("sekolah_id")
+  kategoriAsetId String  @map("kategori_aset_id")
+  gudangId       String  @map("gudang_id")
+  dibuatOleh     String? @map("dibuat_oleh")
+  diperbaruiOleh String? @map("diperbarui_oleh")
+  dihapusOleh    String? @map("dihapus_oleh")
+
   nama               String    @db.VarChar(100)
   kode               String    @unique @db.VarChar(50)
   kondisi            String    @db.VarChar(20)
@@ -746,13 +962,53 @@ model Aset {
   deskripsiKerusakan String?   @map("deskripsi_kerusakan") @db.Text
   statusPerbaikan    String?   @map("status_perbaikan") @db.VarChar(20)
   catatan            String?   @db.Text
-  dibuatPada         DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada     DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
-  dihapusPada        DateTime? @map("dihapus_pada") @db.Timestamp()
 
-  sekolah Sekolah @relation(fields: [sekolahId], references: [id])
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  sekolah        Sekolah                @relation(fields: [sekolahId], references: [id])
+  kategoriAset   KategoriAset           @relation(fields: [kategoriAsetId], references: [id])
+  gudang         Gudang                 @relation(fields: [gudangId], references: [id])
+  laporan        LaporanKerusakan[]
+  peminjamanAset DetailPeminjamanAset[]
 
   @@map("aset")
+}
+
+model PeminjamanAset {
+  id         String  @id @default(uuid())
+  sekolahId  String  @map("sekolah_id")
+  peminjamId String  @map("peminjam_id")
+  petugasId  String? @map("petugas_id")
+
+  nomorPeminjaman       String    @map("nomor_peminjaman") @db.VarChar(30)
+  tanggalPinjam         DateTime  @map("tanggal_pinjam") @db.Date
+  tanggalKembaliRencana DateTime  @map("tanggal_kembali_rencana") @db.Date
+  tanggalKembaliAktual  DateTime? @map("tanggal_kembali_aktual") @db.Date
+  status                String?   @db.VarChar(20)
+  catatanPeminjaman     String?   @map("catatan_peminjaman") @db.Text
+
+  dibuatPada DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
+
+  detailPeminjaman DetailPeminjamanAset[]
+
+  @@map("peminjaman_aset")
+}
+
+model DetailPeminjamanAset {
+  id                 String  @id @default(uuid())
+  peminjamanId       String  @map("peminjaman_id")
+  asetId             String  @map("aset_id")
+  jumlah             Int
+  kondisiSaatPinjam  String  @map("kondisi_saat_pinjam") @db.VarChar(20)
+  kondisiSaatKembali String? @map("kondisi_saat_kembali") @db.VarChar(20)
+  catatanKembali     String? @map("catatan_kembali") @db.Text
+
+  peminjaman PeminjamanAset @relation(fields: [peminjamanId], references: [id])
+  aset       Aset           @relation(fields: [asetId], references: [id])
+
+  @@map("detail_peminjaman_aset")
 }
 
 model Gudang {
@@ -767,6 +1023,8 @@ model Gudang {
   dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  aset Aset[]
 
   @@map("gudang")
 }
@@ -783,28 +1041,36 @@ model KategoriAset {
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
+  aset Aset[]
+
   @@map("kategori_aset")
 }
 
 model LaporanKerusakan {
-  id               String    @id @default(uuid())
-  sekolahId        String    @map("sekolah_id")
-  asetId           String    @map("aset_id")
-  dilaporkanOleh   String    @map("dilaporkan_oleh")
-  dibuatOleh       String?   @map("dibuat_oleh")
-  diperbaruiOleh   String?   @map("diperbarui_oleh")
-  dihapusOleh      String?   @map("dihapus_oleh")
-  tanggalLaporan   DateTime  @map("tanggal_laporan") @db.Timestamp()
-  deskripsi        String    @db.Text
-  status           String?   @db.VarChar(20)
-  catatanPerbaikan String?   @map("catatan_perbaikan") @db.Text
-  dibuatPada       DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada   DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
-  dihapusPada      DateTime? @map("dihapus_pada") @db.Timestamp()
+  id               String   @id @default(uuid())
+  sekolahId        String   @map("sekolah_id")
+  asetId           String   @map("aset_id")
+  dilaporkanOleh   String   @map("dilaporkan_oleh")
+  dibuatOleh       String?  @map("dibuat_oleh")
+  diperbaruiOleh   String?  @map("diperbarui_oleh")
+  dihapusOleh      String?  @map("dihapus_oleh")
+  tanggalLaporan   DateTime @map("tanggal_laporan") @db.Timestamp()
+  deskripsi        String   @db.Text
+  status           String?  @db.VarChar(20)
+  catatanPerbaikan String?  @map("catatan_perbaikan") @db.Text
+
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
+
+  aset Aset @relation(fields: [asetId], references: [id])
 
   @@map("laporan_kerusakan")
 }
 
+// ==========================================
+// 5. CMS & PPDB
+// ==========================================
 model HalamanCms {
   id             String    @id @default(uuid())
   sekolahId      String    @map("sekolah_id")
@@ -961,186 +1227,4 @@ model HasilSeleksiPpdb {
   pendaftaranPpdb PendaftaranPpdb @relation(fields: [pendaftaranPpdbId], references: [id])
 
   @@map("hasil_seleksi_ppdb")
-}
-
-// ==========================================
-// 3. LMS TABLES
-// ==========================================
-
-enum TipeSoal {
-  pilihan_ganda
-  esai
-  benar_salah
-}
-
-enum StatusSesiKuis {
-  sedang_mengerjakan
-  selesai
-  dinilai
-}
-
-model Kuis {
-  id             String    @id @default(uuid())
-  judul          String
-  deskripsi      String?   @db.Text
-  durasiMenit    Int       @map("durasi_menit")
-  waktuMulai     DateTime? @map("waktu_mulai") @db.Timestamp()
-  waktuSelesai   DateTime? @map("waktu_selesai") @db.Timestamp()
-  sekolahId      String    @map("sekolah_id")
-  pembuatId      String    @map("pembuat_id")
-  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
-
-  sekolah Sekolah  @relation(fields: [sekolahId], references: [id], onDelete: Cascade)
-  pembuat Pengguna @relation("PembuatKuis", fields: [pembuatId], references: [id], onDelete: Cascade)
-
-  soal          Soal[]
-  sesiKuisSiswa SesiKuisSiswa[]
-
-  @@index([sekolahId])
-  @@index([pembuatId])
-  @@map("kuis")
-}
-
-model Soal {
-  id             String   @id @default(uuid())
-  kuisId         String   @map("kuis_id")
-  pertanyaan     String   @db.Text
-  tipeSoal       TipeSoal @map("tipe_soal")
-  bobotNilai     Float    @default(1.0) @map("bobot_nilai")
-  pilihan        Json?
-  kunciJawaban   String   @map("kunci_jawaban") @db.Text
-  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
-
-  kuis         Kuis           @relation(fields: [kuisId], references: [id], onDelete: Cascade)
-  jawabanSiswa JawabanSiswa[]
-
-  @@index([kuisId])
-  @@map("soal")
-}
-
-model SesiKuisSiswa {
-  id           String         @id @default(uuid())
-  kuisId       String         @map("kuis_id")
-  siswaId      String         @map("siswa_id")
-  waktuMulai   DateTime       @default(now()) @map("waktu_mulai") @db.Timestamp()
-  waktuSelesai DateTime?      @map("waktu_selesai") @db.Timestamp()
-  nilaiAkhir   Float?         @map("nilai_akhir")
-  status       StatusSesiKuis @default(sedang_mengerjakan)
-
-  kuis         Kuis           @relation(fields: [kuisId], references: [id], onDelete: Cascade)
-  siswa        Pengguna       @relation(fields: [siswaId], references: [id], onDelete: Cascade)
-  jawabanSiswa JawabanSiswa[]
-
-  @@unique([kuisId, siswaId])
-  @@index([kuisId])
-  @@index([siswaId])
-  @@map("sesi_kuis_siswa")
-}
-
-model PendaftaranSekolah {
-  id              String    @id @default(uuid())
-  nama            String
-  email           String
-  kataSandi       String    @map("kata_sandi")
-  namaSekolah     String    @map("nama_sekolah")
-  jenjang         String
-  subdomain       String
-  alamatSekolah   String    @map("alamat_sekolah")
-  teleponSekolah  String    @map("telepon_sekolah")
-  logo            String?
-  paketId         String    @map("paket_id")
-  yayasanId       String?   @map("yayasan_id")
-  kodeOtp         String?   @map("kode_otp")
-  otpTimeout      DateTime? @map("otp_timeout")
-  status          String    @default("menunggu_verifikasi")
-  midtransOrderId String?   @map("midtrans_order_id")
-  dibuatPada      DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada  DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
-
-  @@map("pendaftaran_sekolah")
-}
-
-model JadwalMengajar {
-  id           String  @id @default(uuid())
-  kelasMapelId String  @map("kelas_mapel_id")
-  hari         String  @db.VarChar(20)
-  jamMulai     String  @map("jam_mulai") @db.VarChar(5)
-  jamSelesai   String  @map("jam_selesai") @db.VarChar(5)
-  ruangan      String? @db.VarChar(100)
-
-  dibuatOleh     String? @map("dibuat_oleh")
-  diperbaruiOleh String? @map("diperbarui_oleh")
-  dihapusOleh    String? @map("dihapus_oleh")
-
-  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
-  dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
-
-  kelasMapel KelasMapel @relation(fields: [kelasMapelId], references: [id])
-
-  @@index([kelasMapelId])
-  @@index([hari])
-  @@map("jadwal_mengajar")
-}
-
-// ==========================================
-// 4. INFRASTRUKTUR & AUDIT
-// ==========================================
-
-model Gedung {
-  id         String   @id @default(uuid())
-  sekolahId  String   @map("sekolah_id")
-  nama       String   @db.VarChar(100)
-  kode       String?  @db.VarChar(50)
-  fotoUrl    String?  @map("foto_url") @db.VarChar(255)
-  dibuatPada DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-
-  sekolah    Sekolah  @relation(fields: [sekolahId], references: [id])
-  lantai     Lantai[]
-
-  @@map("gedung")
-}
-
-model Lantai {
-  id         String   @id @default(uuid())
-  gedungId   String   @map("gedung_id")
-  nama       String   @db.VarChar(50)
-  dibuatPada DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-
-  gedung     Gedung   @relation(fields: [gedungId], references: [id])
-  kelas      Kelas[]
-
-  @@map("lantai")
-}
-
-model AuditLog {
-  id          String   @id @default(uuid())
-  penggunaId  String   @map("pengguna_id")
-  sekolahId   String   @map("sekolah_id")
-  modul       String   @db.VarChar(100)
-  aksi        String   @db.VarChar(50)
-  payload     Json?
-  ipAddress   String?  @map("ip_address") @db.VarChar(50)
-  dibuatPada  DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-
-  pengguna    Pengguna @relation(fields: [penggunaId], references: [id])
-  sekolah     Sekolah  @relation(fields: [sekolahId], references: [id])
-
-  @@map("audit_log")
-}
-
-model SectionBeranda {
-  id             String   @id @default(uuid())
-  sekolahId      String   @map("sekolah_id")
-  kunci          String   @db.VarChar(100)
-  nilai          String   @db.Text
-  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
-
-  sekolah        Sekolah  @relation(fields: [sekolahId], references: [id])
-
-  @@unique([sekolahId, kunci])
-  @@map("section_beranda")
 }

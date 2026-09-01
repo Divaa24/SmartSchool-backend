@@ -76,7 +76,8 @@ export const createSiswa = async (
         await tx.anggotaKelas.create({
           data: {
             kelasId: validatedData.kelasId,
-            siswaId: newSiswa.id,
+            penggunaId: newSiswa.id,
+            tahunAjaranId: kelasExists.tahunAjaranId,
           },
         });
       }

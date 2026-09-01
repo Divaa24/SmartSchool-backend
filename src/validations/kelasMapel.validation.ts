@@ -40,3 +40,9 @@ export const updateKelasMapelSchema = z.object({
     .max(20, "Status maksimal 20 karakter")
     .optional(),
 });
+
+  export const createBulkKelasMapelSchema = z.object({
+  kelasIds: z.array(z.string().uuid("ID kelas tidak valid")).min(1, "Pilih minimal 1 kelas"),
+  mataPelajaranId: z.string().uuid("ID mata pelajaran tidak valid"),
+  guruPengajarId: z.string().uuid("ID guru pengajar tidak valid"),
+});

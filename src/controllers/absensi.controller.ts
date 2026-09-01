@@ -61,7 +61,7 @@ export const createAbsensi = async (req: AuthRequest, res: Response) => {
         );
       }
 
-      if (!sekolah.latitude || !sekolah.longitude) {
+      if (!sekolah.lintang || !sekolah.bujur) {
         throw new AppError(
           "Admin sekolah belum mengatur titik koordinat sekolah",
           400,
@@ -71,8 +71,8 @@ export const createAbsensi = async (req: AuthRequest, res: Response) => {
       const jarak = hitungJarakMeter(
         data.lintang,
         data.bujur,
-        sekolah.latitude,
-        sekolah.longitude,
+        Number(sekolah.lintang),
+        Number(sekolah.bujur),
       );
 
       const radiusMaks = sekolah.radiusAbsensi || 50; // Default 50 meter
