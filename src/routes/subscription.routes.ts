@@ -3,7 +3,8 @@ import { createPayment } from "../controllers/subscription.controller";
 import { authenticate } from "../middlewares/auth.middleware";
 import { requireTenant } from "../middlewares/tenant.middleware";
 import { authorizeRoles } from "../middlewares/role.middleware";
-import { getPendingPayments } from "../controllers/subscription.controller";
+import { getPendingPayments, extendSubscription } from "../controllers/subscription.controller";
+
 
 const router = Router();
 
@@ -22,6 +23,14 @@ router.get(
   requireTenant,
   authorizeRoles("admin_sekolah"),
   getPendingPayments,
+);
+
+router.post(
+  "/perpanjang",
+  authenticate,
+  requireTenant,
+  authorizeRoles("admin_sekolah"),
+  extendSubscription,
 );
 
 export default router;

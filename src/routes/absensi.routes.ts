@@ -7,6 +7,7 @@ import {
   getAbsensiSaya,
   getAbsensiKelas,
 } from "../controllers/absensi.controller";
+import { exportRekapAbsensi } from "../controllers/absensi.controller";
 import { authenticate } from "../middlewares/auth.middleware";
 import { requireTenant } from "../middlewares/tenant.middleware";
 
@@ -33,5 +34,7 @@ router.use(authenticate, requireTenant);
 router.post("/", upload.single("snapshot"), createAbsensi);
 router.get("/saya", getAbsensiSaya);
 router.get("/kelas/:kelasId", getAbsensiKelas);
+
+router.get("/export", exportRekapAbsensi);
 
 export default router;

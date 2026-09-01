@@ -3,18 +3,33 @@ import { prisma } from "../config/db";
 import { AuthRequest } from "../middlewares/auth.middleware";
 import { successResponse } from "../utils/responseFormatter";
 
-export const getDashboardSekolah = async (req: AuthRequest, res: Response) => {
+export const getDashboardSekolah = async (
+  req: AuthRequest,
+  res: Response
+) => {
   try {
     const sekolahId = req.user?.sekolahId;
-    if (!sekolahId)
-      return res.status(403).json({ success: false, message: "Akses ditolak" });
+    const yayasanId = req.user?.yayasanId;
 
-    // 1. Total Entitas
-    const [totalSiswa, totalGuru, totalKelas] = await Promise.all([
+    if (!sekolahId) {
+      return res.status(403).json({
+        success: false,
+        message: "Akses ditolak",
+      });
+    }
+
+    const [
+      totalSiswa,
+      totalGuru,
+      totalKelas,
+      absensiHariIni,
+    ] = await Promise.all([
       prisma.pengguna.count({
         where: {
           sekolahId,
-          peran: { nama: "siswa" },
+          peran: {
+            nama: "siswa",
+          },
           dihapusPada: null,
           status: "aktif",
         },
@@ -22,49 +37,119 @@ export const getDashboardSekolah = async (req: AuthRequest, res: Response) => {
       prisma.pengguna.count({
         where: {
           sekolahId,
-          peran: { nama: "guru" },
+          peran: {
+            nama: "guru",
+          },
           dihapusPada: null,
           status: "aktif",
         },
       }),
-      prisma.kelas.count({ where: { sekolahId, dihapusPada: null } }),
+      prisma.kelas.count({
+        where: {
+          sekolahId,
+          dihapusPada: null,
+        },
+      }),
+      prisma.absensi.groupBy({
+        by: ["status"],
+        where: {
+          kelas: {
+            sekolahId,
+          },
+          tanggal: new Date(),
+        },
+        _count: true,
+      }),
     ]);
 
-    // 2. Statistik Kehadiran Hari Ini
-    const hariIni = new Date();
-    hariIni.setHours(0, 0, 0, 0);
+    const rekapKehadiran = {
+      hadir: 0,
+      izin: 0,
+      sakit: 0,
+      alpha: 0,
+    };
 
-    const absensiHariIni = await prisma.absensi.groupBy({
-      by: ["status"],
-      where: { kelas: { sekolahId }, tanggal: hariIni },
-      _count: true,
+    absensiHariIni.forEach((absensi) => {
+      const status = absensi.status.toLowerCase();
+
+      if (status === "h") {
+        rekapKehadiran.hadir = absensi._count;
+      } else if (status === "i") {
+        rekapKehadiran.izin = absensi._count;
+      } else if (status === "s") {
+        rekapKehadiran.sakit = absensi._count;
+      } else if (status === "a") {
+        rekapKehadiran.alpha = absensi._count;
+      }
     });
 
-    const rekapKehadiran = { hadir: 0, izin: 0, sakit: 0, alpha: 0 };
-    absensiHariIni.forEach((a) => {
-      if (a.status.toLowerCase() === "h") rekapKehadiran.hadir = a._count;
-      else if (a.status.toLowerCase() === "i") rekapKehadiran.izin = a._count;
-      else if (a.status.toLowerCase() === "s") rekapKehadiran.sakit = a._count;
-      else if (a.status.toLowerCase() === "a") rekapKehadiran.alpha = a._count;
-    });
-
-    // 3. Kalkulasi Persentase Kehadiran
     const persentaseHadir =
       totalSiswa > 0
         ? ((rekapKehadiran.hadir / totalSiswa) * 100).toFixed(1)
         : "0";
 
-    return successResponse(res, "Berhasil mengambil statistik dashboard", {
-      totalSiswa,
-      totalGuru,
-      totalKelas,
-      persentaseHadir: `${persentaseHadir}%`,
-      rekapKehadiran,
-    });
+    let yayasan = null;
+
+    if (yayasanId) {
+      const [yayasanSiswa, yayasanGuru, yayasanKelas] =
+        await Promise.all([
+          prisma.pengguna.count({
+            where: {
+              yayasanId,
+              peran: {
+                nama: "siswa",
+              },
+              dihapusPada: null,
+              status: "aktif",
+            },
+          }),
+          prisma.pengguna.count({
+            where: {
+              yayasanId,
+              peran: {
+                nama: "guru",
+              },
+              dihapusPada: null,
+              status: "aktif",
+            },
+          }),
+          prisma.kelas.count({
+            where: {
+              sekolah: {
+                yayasanId,
+              },
+              dihapusPada: null,
+            },
+          }),
+        ]);
+
+      yayasan = {
+        totalSiswa: yayasanSiswa,
+        totalGuru: yayasanGuru,
+        totalKelas: yayasanKelas,
+      };
+    }
+
+    return successResponse(
+      res,
+      "Berhasil mengambil statistik dashboard",
+      {
+        cabang: {
+          totalSiswa,
+          totalGuru,
+          totalKelas,
+          persentaseHadir: `${persentaseHadir}%`,
+          rekapKehadiran,
+        },
+        yayasan,
+      }
+    );
   } catch (error) {
     console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };

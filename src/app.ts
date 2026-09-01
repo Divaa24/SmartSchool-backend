@@ -21,6 +21,8 @@ import absensiRoutes from "./routes/absensi.routes";
 import soalUjianRoutes from "./routes/soalUjian.routes";
 import ujianRoutes from "./routes/ujian.routes";
 import infrastrukturRoutes from "./routes/infrastruktur.routes";
+import nilaiRoutes from "./routes/nilai.routes";
+import dashboardRoutes from "./routes/dashboard.routes";
 
 const app: Application = express();
 
@@ -63,6 +65,9 @@ app.use("/api/v1/absensi", absensiRoutes);
 app.use("/api/v1/soal-ujian", soalUjianRoutes);
 app.use("/api/v1/ujian", ujianRoutes);
 app.use("/api/v1/infrastruktur", infrastrukturRoutes);
+app.use("/api/v1/nilai", nilaiRoutes);
+app.use("/api/v1/dashboard", dashboardRoutes);
+
 
 setInterval(
   () => {
