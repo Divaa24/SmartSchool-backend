@@ -58,7 +58,7 @@ export const createSiswa = async (
           alamatDomisili: validatedData.alamatDomisili,
           kecamatan: validatedData.kecamatan,
           kelurahan: validatedData.kelurahan,
-          kota: validatedData.kota,
+          kotaKabupaten: validatedData.kota,
         },
       });
 

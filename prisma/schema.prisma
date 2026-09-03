@@ -56,7 +56,7 @@ model Pengguna {
 
   alamatDomisili       String?  @map("alamat_domisili") @db.Text
   alamatSesuaiDomisili Boolean? @default(true) @map("alamat_sesuai_domisili")
-  noTeleponRumah       String?  @map("no_telepon_rumah") @db.VarChar(20)
+  noTelepon       String?  @map("no_telepon_rumah") @db.VarChar(20)
   namaWaliPesertaDidik String?  @map("nama_wali_peserta_didik") @db.VarChar(20)
 
   status        String?   @db.VarChar(20)

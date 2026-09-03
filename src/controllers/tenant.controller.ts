@@ -76,9 +76,19 @@ export const verifyAndPay = async (
   next: NextFunction,
 ) => {
   try {
-    const { email, kodeOtp } = req.body;
+    // 1. Tambahkan parameter 'bank' yang harus dikirim oleh Frontend
+    const { email, kodeOtp, bank } = req.body;
     if (!email || !kodeOtp)
       throw new AppError("Email dan OTP wajib diisi", 400);
+
+    // Validasi input bank (sementara batasi ke bank yang umum untuk bank_transfer)
+    const allowedBanks = ["bca", "bni", "bri"];
+    if (bank && !allowedBanks.includes(bank.toLowerCase())) {
+      throw new AppError(
+        "Pilihan bank saat ini hanya mendukung: bca, bni, bri",
+        400,
+      );
+    }
 
     const pendaftaran = await prisma.pendaftaranTenant.findFirst({
       where: { emailPendaftar: email, status: "menunggu_verifikasi" },
@@ -97,14 +107,22 @@ export const verifyAndPay = async (
     });
     if (!paket) throw new AppError("Paket tidak ditemukan", 404);
 
+    // LOGIKA JIKA PAKET BERBAYAR
     if (Number(paket.harga) > 0) {
+      if (!bank)
+        throw new AppError(
+          "Pilihan bank wajib dikirim untuk paket berbayar",
+          400,
+        );
+
       const orderId = `REG-${pendaftaran.id.substring(0, 8)}-${Date.now()}`;
       const midtransAuth = Buffer.from(
         process.env.MIDTRANS_SERVER_KEY + ":",
       ).toString("base64");
 
+      // 2. Tembak endpoint Core API Midtrans
       const midtransResponse = await fetch(
-        "https://app.sandbox.midtrans.com/snap/v1/transactions",
+        "https://api.sandbox.midtrans.com/v2/charge",
         {
           method: "POST",
           headers: {
@@ -113,9 +131,13 @@ export const verifyAndPay = async (
             Authorization: `Basic ${midtransAuth}`,
           },
           body: JSON.stringify({
+            payment_type: "bank_transfer",
             transaction_details: {
               order_id: orderId,
               gross_amount: Number(paket.harga),
+            },
+            bank_transfer: {
+              bank: bank.toLowerCase(),
             },
             customer_details: {
               first_name: pendaftaran.namaPendaftar,
@@ -125,9 +147,12 @@ export const verifyAndPay = async (
         },
       );
 
-      if (!midtransResponse.ok)
-        throw new AppError("Gagal membuat pembayaran Midtrans", 500);
-      const snap = await midtransResponse.json();
+      const charge = await midtransResponse.json();
+
+      if (!midtransResponse.ok || charge.status_code !== "201") {
+        console.error("Midtrans Error:", charge);
+        throw new AppError("Gagal membuat Virtual Account Midtrans", 500);
+      }
 
       await prisma.pendaftaranTenant.update({
         where: { id: pendaftaran.id },
@@ -139,11 +164,16 @@ export const verifyAndPay = async (
         },
       });
 
+      // 3. Kembalikan Nomor VA ke Frontend agar mereka bisa menampilkannya di UI
       return successResponse(res, "Verifikasi sukses. Silakan bayar.", {
-        payment_url: snap.redirect_url,
+        order_id: orderId,
+        bank: bank.toUpperCase(),
+        va_number: charge.va_numbers[0].va_number, // Ini yang dibutuhkan FE
+        gross_amount: Number(paket.harga),
         is_trial: false,
       });
     } else {
+      // LOGIKA JIKA PAKET GRATIS / TRIAL (Tidak ada perubahan)
       const peranAdmin = await prisma.peran.findUnique({
         where: { nama: "admin_sekolah" },
       });
