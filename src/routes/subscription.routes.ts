@@ -1,20 +1,29 @@
 import { Router } from "express";
-import { createPayment } from "../controllers/subscription.controller";
+import {
+  createPayment,
+  getPendingPayments,
+  extendSubscription,
+  getAllLanggananSekolah,
+} from "../controllers/subscription.controller";
 import { authenticate } from "../middlewares/auth.middleware";
 import { requireTenant } from "../middlewares/tenant.middleware";
 import { authorizeRoles } from "../middlewares/role.middleware";
-import { getPendingPayments, extendSubscription } from "../controllers/subscription.controller";
-
 
 const router = Router();
 
-// Endpoint ini hanya boleh diakses oleh admin sekolah
+router.get(
+  "/",
+  authenticate,
+  authorizeRoles("super_admin"),
+  getAllLanggananSekolah
+);
+
 router.post(
   "/bayar",
   authenticate,
   requireTenant,
   authorizeRoles("admin_sekolah"),
-  createPayment,
+  createPayment
 );
 
 router.get(
@@ -22,7 +31,7 @@ router.get(
   authenticate,
   requireTenant,
   authorizeRoles("admin_sekolah"),
-  getPendingPayments,
+  getPendingPayments
 );
 
 router.post(
@@ -30,7 +39,7 @@ router.post(
   authenticate,
   requireTenant,
   authorizeRoles("admin_sekolah"),
-  extendSubscription,
+  extendSubscription
 );
 
 export default router;
