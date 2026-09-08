@@ -218,7 +218,7 @@ export const extendSubscription = async (
         where: {
           sekolahId: req.user.sekolahId,
           statusLangganan: "active",
-          dihapusOleh: null,
+          dihapusPada: null,
         },
         orderBy: {
           tanggalBerakhir: "desc",
@@ -370,6 +370,33 @@ export const extendSubscription = async (
         tanggalBerakhir,
       },
       201
+    );
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAllLanggananSekolah = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const langganan = await prisma.langgananSekolah.findMany({
+      include: {
+        sekolah: true,
+        paket: true,
+      },
+      orderBy: {
+        dibuatPada: "desc",
+      },
+    });
+
+    return successResponse(
+      res,
+      "Berhasil mendapatkan seluruh data langganan sekolah",
+      langganan,
+      200
     );
   } catch (error) {
     next(error);

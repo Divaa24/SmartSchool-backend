@@ -1,20 +1,17 @@
 import { Router } from "express";
-
 import {
   getTahunAjaran,
   createTahunAjaran,
   updateTahunAjaran,
   deleteTahunAjaran,
 } from "../controllers/tahunAjaran.controller";
+import { authenticate } from "../middlewares/auth.middleware";
 
 const router = Router();
 
-router.get("/", getTahunAjaran);
-
-router.post("/", createTahunAjaran);
-
-router.put("/:id", updateTahunAjaran);
-
-router.delete("/:id", deleteTahunAjaran);
+router.get("/", authenticate, getTahunAjaran);
+router.post("/", authenticate, createTahunAjaran);
+router.put("/:id", authenticate, updateTahunAjaran);
+router.delete("/:id", authenticate, deleteTahunAjaran);
 
 export default router;
