@@ -1,7 +1,6 @@
-import { Resend } from "resend";
-
-// Inisialisasi Resend (Pastikan RESEND_API_KEY ada di .env)
-const resend = new Resend(process.env.RESEND_API_KEY);
+import nodemailer from "nodemailer";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
+import { google } from "googleapis";
 
 interface SendOtpParams {
   email: string;
@@ -9,35 +8,120 @@ interface SendOtpParams {
   kodeOtp: string;
 }
 
+const {
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REFRESH_TOKEN,
+  GOOGLE_SENDER_EMAIL,
+} = process.env;
+
+if (
+  !GOOGLE_CLIENT_ID ||
+  !GOOGLE_CLIENT_SECRET ||
+  !GOOGLE_REFRESH_TOKEN ||
+  !GOOGLE_SENDER_EMAIL
+) {
+  throw new Error(
+    "Konfigurasi Gmail OAuth2 belum lengkap di environment variables"
+  );
+}
+
+const oauth2Client = new google.auth.OAuth2(
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET
+);
+
+oauth2Client.setCredentials({
+  refresh_token: GOOGLE_REFRESH_TOKEN,
+});
+
 export const sendOtpEmail = async ({
   email,
   namaLengkap,
   kodeOtp,
 }: SendOtpParams) => {
   try {
-    const { data, error } = await resend.emails.send({
-      from: "SmartSchool <onboarding@resend.dev>", // Nanti ganti dengan domain kamu kalau sudah beli domain
-      to: email, // <-- KUNCI DINAMISNYA ADA DI SINI
-      subject: "Kode OTP Verifikasi SmartSchool",
+    // Ambil access token dari refresh token
+    const accessTokenResponse = await oauth2Client.getAccessToken();
+
+    const accessToken = accessTokenResponse.token;
+
+    if (!accessToken) {
+      throw new Error("Gagal mendapatkan Google OAuth2 access token");
+    }
+
+    // Buat transporter Gmail
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      family: 4,
+      auth: {
+        type: "OAuth2",
+        user: GOOGLE_SENDER_EMAIL,
+        clientId: GOOGLE_CLIENT_ID,
+        clientSecret: GOOGLE_CLIENT_SECRET,
+        refreshToken: GOOGLE_REFRESH_TOKEN,
+        accessToken,
+      },
+    } as SMTPTransport.Options);
+
+    // Cek koneksi SMTP sebelum mengirim
+    await transporter.verify();
+
+    console.log("Koneksi Gmail SMTP berhasil");
+
+    const info = await transporter.sendMail({
+      from: `"SmartSchool" <${GOOGLE_SENDER_EMAIL}>`,
+      to: email,
+      subject: "Kode OTP Registrasi SmartSchool",
+
       html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-          <h2>Halo, ${namaLengkap}!</h2>
-          <p>Gunakan kode OTP berikut untuk melanjutkan proses di SmartSchool. Kode ini berlaku selama 5 menit.</p>
-          <h1 style="color: #4F46E5; letter-spacing: 2px;">${kodeOtp}</h1>
-          <p>Jika Anda tidak merasa meminta kode ini, abaikan email ini.</p>
+        <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+          <h2>Verifikasi Registrasi SmartSchool</h2>
+
+          <p>
+            Halo <strong>${namaLengkap}</strong>,
+          </p>
+
+          <p>
+            Gunakan kode OTP berikut untuk memverifikasi akun SmartSchool kamu:
+          </p>
+
+          <div
+            style="
+              font-size: 32px;
+              font-weight: bold;
+              letter-spacing: 8px;
+              margin: 20px 0;
+            "
+          >
+            ${kodeOtp}
+          </div>
+
+          <p>
+            Kode OTP ini berlaku selama <strong>5 menit</strong>.
+          </p>
+
+          <p>
+            Jika kamu tidak merasa melakukan registrasi, abaikan email ini.
+          </p>
+
+          <br />
+
+          <p>
+            Terima kasih,<br />
+            <strong>SmartSchool Team</strong>
+          </p>
         </div>
       `,
     });
 
-    if (error) {
-      console.error("Error dari Resend:", error);
-      throw new Error(error.message);
-    }
+    console.log("✅ Email OTP berhasil dikirim");
+    console.log("📨 Message ID:", info.messageId);
 
-    return data;
+    return info;
   } catch (error) {
-    console.error("Gagal mengeksekusi pengiriman email:", error);
-    // Tidak di-throw AppError di sini agar tidak crash, tapi di-log
-    return null;
+    console.error("Gagal mengirim email OTP:", error);
+
+    throw error;
   }
 };

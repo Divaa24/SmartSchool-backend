@@ -13,49 +13,28 @@ import { sendOtpEmail } from "../utils/email";
 import { AppError } from "../utils/appError";
 import { generateAccessToken } from "../utils/generateToken";
 
-export const register = async (
-  req: Request,
-  res: Response
-) => {
+export const register = async (req: Request, res: Response) => {
   const data = registerSchema.parse(req.body);
 
   const existingUser = await prisma.pengguna.findFirst({
     where: {
-      OR: [
-        { email: data.email },
-        { namaPengguna: data.namaPengguna },
-      ],
+      OR: [{ email: data.email }, { namaPengguna: data.namaPengguna }],
     },
   });
 
   if (existingUser) {
     if (existingUser.status === "aktif") {
-      throw new AppError(
-        "Email atau username sudah terdaftar dan aktif",
-        400
-      );
+      throw new AppError("Email atau username sudah terdaftar dan aktif", 400);
     }
   }
 
-  const hashedPassword = await bcrypt.hash(
-    data.kataSandi,
-    10
-  );
-
+  const hashedPassword = await bcrypt.hash(data.kataSandi, 10);
   const otpCode = generateOtp();
+  const otpTimeout = new Date(Date.now() + 5 * 60 * 1000);
 
-  const otpTimeout = new Date(
-    Date.now() + 5 * 60 * 1000
-  );
-
-  if (
-    existingUser &&
-    existingUser.status === "menunggu_verifikasi"
-  ) {
+  if (existingUser && existingUser.status === "menunggu_verifikasi") {
     await prisma.pengguna.update({
-      where: {
-        id: existingUser.id,
-      },
+      where: { id: existingUser.id },
       data: {
         namaLengkap: data.namaLengkap,
         kataSandi: hashedPassword,
@@ -77,59 +56,46 @@ export const register = async (
     });
   }
 
-  await sendOtpEmail({
-    email: data.email,
-    namaLengkap: data.namaLengkap,
-    kodeOtp: otpCode,
-  });
+  try {
+    await sendOtpEmail({
+      email: data.email,
+      namaLengkap: data.namaLengkap,
+      kodeOtp: otpCode,
+    });
+  } catch (err) {
+    throw new AppError(
+      "Registrasi berhasil, tapi gagal mengirim email OTP. Silakan coba lagi.",
+      502
+    );
+  }
 
   return res.status(200).json({
     success: true,
-    message:
-      "Registrasi berhasil. Silakan cek email Anda untuk kode OTP verifikasi.",
+    message: "Registrasi berhasil. Silakan cek email Anda untuk kode OTP verifikasi.",
   });
 };
 
-export const verifyRegister = async (
-  req: Request,
-  res: Response
-) => {
+export const verifyRegister = async (req: Request, res: Response) => {
   const data = verifySchema.parse(req.body);
 
   const user = await prisma.pengguna.findUnique({
-    where: {
-      email: data.email,
-    },
+    where: { email: data.email },
   });
 
-  if (
-    !user ||
-    user.status !== "menunggu_verifikasi"
-  ) {
-    throw new AppError(
-      "Pengguna tidak ditemukan atau sudah terverifikasi",
-      400
-    );
+  if (!user || user.status !== "menunggu_verifikasi") {
+    throw new AppError("Pengguna tidak ditemukan atau sudah terverifikasi", 400);
   }
 
   if (user.kodeOtp !== data.kodeOtp) {
     throw new AppError("Kode OTP salah", 400);
   }
 
-  if (
-    !user.otpTimeout ||
-    user.otpTimeout < new Date()
-  ) {
-    throw new AppError(
-      "Kode OTP sudah kedaluwarsa",
-      400
-    );
+  if (!user.otpTimeout || user.otpTimeout < new Date()) {
+    throw new AppError("Kode OTP sudah kedaluwarsa", 400);
   }
 
   await prisma.pengguna.update({
-    where: {
-      id: user.id,
-    },
+    where: { id: user.id },
     data: {
       status: "aktif",
       kodeOtp: null,
@@ -138,9 +104,7 @@ export const verifyRegister = async (
   });
 
   const userWithRole = await prisma.pengguna.findUnique({
-    where: {
-      id: user.id,
-    },
+    where: { id: user.id },
     include: {
       peran: true,
       sekolah: true,
@@ -149,10 +113,7 @@ export const verifyRegister = async (
   });
 
   if (!userWithRole) {
-    throw new AppError(
-      "Data pengguna tidak ditemukan",
-      404
-    );
+    throw new AppError("Data pengguna tidak ditemukan", 404);
   }
 
   const token = generateAccessToken({
@@ -166,24 +127,17 @@ export const verifyRegister = async (
 
   return res.status(200).json({
     success: true,
-    message:
-      "Verifikasi berhasil. Anda sekarang telah login.",
+    message: "Verifikasi berhasil. Anda sekarang telah login.",
     token,
   });
 };
 
-export const login = async (
-  req: Request,
-  res: Response
-) => {
+export const login = async (req: Request, res: Response) => {
   const data = loginSchema.parse(req.body);
 
   const user = await prisma.pengguna.findFirst({
     where: {
-      OR: [
-        { email: data.identifier },
-        { namaPengguna: data.identifier },
-      ],
+      OR: [{ email: data.identifier }, { namaPengguna: data.identifier }],
     },
     include: {
       peran: true,
@@ -193,38 +147,22 @@ export const login = async (
   });
 
   if (!user) {
-    throw new AppError(
-      "Kredensial tidak valid",
-      401
-    );
+    throw new AppError("Kredensial tidak valid", 401);
   }
 
   if (user.status !== "aktif") {
-    throw new AppError(
-      "Akun belum diverifikasi atau tidak aktif",
-      401
-    );
+    throw new AppError("Akun belum diverifikasi atau tidak aktif", 401);
   }
 
-  const isMatch = await bcrypt.compare(
-    data.kataSandi,
-    user.kataSandi
-  );
+  const isMatch = await bcrypt.compare(data.kataSandi, user.kataSandi);
 
   if (!isMatch) {
-    throw new AppError(
-      "Kredensial tidak valid",
-      401
-    );
+    throw new AppError("Kredensial tidak valid", 401);
   }
 
   await prisma.pengguna.update({
-    where: {
-      id: user.id,
-    },
-    data: {
-      terakhirLogin: new Date(),
-    },
+    where: { id: user.id },
+    data: { terakhirLogin: new Date() },
   });
 
   const token = generateAccessToken({
@@ -243,106 +181,70 @@ export const login = async (
   });
 };
 
-export const forgotPassword = async (
-  req: Request,
-  res: Response
-) => {
+export const forgotPassword = async (req: Request, res: Response) => {
   const data = forgotPasswordSchema.parse(req.body);
 
   const user = await prisma.pengguna.findUnique({
-    where: {
-      email: data.email,
-    },
+    where: { email: data.email },
   });
 
-  if (
-    !user ||
-    user.status !== "aktif"
-  ) {
+  if (!user || user.status !== "aktif") {
     return res.status(200).json({
       success: true,
-      message:
-        "Jika email terdaftar, kode OTP reset password telah dikirim",
+      message: "Jika email terdaftar, kode OTP reset password telah dikirim",
     });
   }
 
   const otpCode = generateOtp();
-
-  const otpTimeout = new Date(
-    Date.now() + 5 * 60 * 1000
-  );
+  const otpTimeout = new Date(Date.now() + 5 * 60 * 1000);
 
   await prisma.pengguna.update({
-    where: {
-      id: user.id,
-    },
-    data: {
-      kodeOtp: otpCode,
-      otpTimeout,
-    },
+    where: { id: user.id },
+    data: { kodeOtp: otpCode, otpTimeout },
   });
 
-  await sendOtpEmail({
-    email: user.email,
-    namaLengkap: user.namaLengkap,
-    kodeOtp: otpCode,
-  });
+  try {
+    await sendOtpEmail({
+      email: user.email,
+      namaLengkap: user.namaLengkap,
+      kodeOtp: otpCode,
+    });
+  } catch (err) {
+    throw new AppError(
+      "Gagal mengirim email OTP reset password. Silakan coba lagi.",
+      502
+    );
+  }
 
   return res.status(200).json({
     success: true,
-    message:
-      "Silakan cek email Anda untuk kode OTP reset password.",
+    message: "Silakan cek email Anda untuk kode OTP reset password.",
   });
 };
 
-export const resetPassword = async (
-  req: Request,
-  res: Response
-) => {
+export const resetPassword = async (req: Request, res: Response) => {
   const data = resetPasswordSchema.parse(req.body);
 
   const user = await prisma.pengguna.findUnique({
-    where: {
-      email: data.email,
-    },
+    where: { email: data.email },
   });
 
-  if (
-    !user ||
-    user.status !== "aktif"
-  ) {
-    throw new AppError(
-      "Pengguna tidak ditemukan atau tidak aktif",
-      401
-    );
+  if (!user || user.status !== "aktif") {
+    throw new AppError("Pengguna tidak ditemukan atau tidak aktif", 401);
   }
 
   if (user.kodeOtp !== data.kodeOtp) {
-    throw new AppError(
-      "Kode OTP salah",
-      400
-    );
+    throw new AppError("Kode OTP salah", 400);
   }
 
-  if (
-    !user.otpTimeout ||
-    user.otpTimeout < new Date()
-  ) {
-    throw new AppError(
-      "Kode OTP sudah kedaluwarsa",
-      400
-    );
+  if (!user.otpTimeout || user.otpTimeout < new Date()) {
+    throw new AppError("Kode OTP sudah kedaluwarsa", 400);
   }
 
-  const hashedPassword = await bcrypt.hash(
-    data.kataSandi,
-    10
-  );
+  const hashedPassword = await bcrypt.hash(data.kataSandi, 10);
 
   await prisma.pengguna.update({
-    where: {
-      id: user.id,
-    },
+    where: { id: user.id },
     data: {
       kataSandi: hashedPassword,
       kodeOtp: null,
