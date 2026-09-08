@@ -1,7 +1,18 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
+import { google } from "googleapis";
 
-// Inisialisasi Resend (Pastikan RESEND_API_KEY ada di .env)
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Pastikan TypeScript membaca env sebagai string
+const CLIENT_ID = process.env.GOOGLE_CLIENT_ID as string;
+const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET as string;
+const REFRESH_TOKEN = process.env.GOOGLE_REFRESH_TOKEN as string;
+const SENDER_EMAIL = process.env.GOOGLE_SENDER_EMAIL as string;
+
+const oAuth2Client = new google.auth.OAuth2(
+  CLIENT_ID,
+  CLIENT_SECRET,
+  "https://developers.google.com/oauthplayground",
+);
+oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 interface SendOtpParams {
   email: string;
@@ -15,9 +26,24 @@ export const sendOtpEmail = async ({
   kodeOtp,
 }: SendOtpParams) => {
   try {
-    const { data, error } = await resend.emails.send({
-      from: "SmartSchool <onboarding@resend.dev>", // Nanti ganti dengan domain kamu kalau sudah beli domain
-      to: email, // <-- KUNCI DINAMISNYA ADA DI SINI
+    const accessTokenResponse = await oAuth2Client.getAccessToken();
+    const accessToken = accessTokenResponse.token as string;
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: SENDER_EMAIL,
+        clientId: CLIENT_ID,
+        clientSecret: CLIENT_SECRET,
+        refreshToken: REFRESH_TOKEN,
+        accessToken: accessToken,
+      },
+    });
+
+    const mailOptions = {
+      from: `SmartSchool <${SENDER_EMAIL}>`,
+      to: email, // <-- Menggunakan parameter dari interface
       subject: "Kode OTP Verifikasi SmartSchool",
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
@@ -27,17 +53,12 @@ export const sendOtpEmail = async ({
           <p>Jika Anda tidak merasa meminta kode ini, abaikan email ini.</p>
         </div>
       `,
-    });
+    };
 
-    if (error) {
-      console.error("Error dari Resend:", error);
-      throw new Error(error.message);
-    }
-
+    const data = await transporter.sendMail(mailOptions);
     return data;
   } catch (error) {
     console.error("Gagal mengeksekusi pengiriman email:", error);
-    // Tidak di-throw AppError di sini agar tidak crash, tapi di-log
     return null;
   }
 };
