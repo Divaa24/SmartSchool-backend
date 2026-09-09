@@ -39,16 +39,22 @@ export const sendOtpEmail = async ({
 
     // Buat transporter Gmail
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      family: 4,
       auth: {
         type: "OAuth2",
         user: SENDER_EMAIL,
         clientId: CLIENT_ID,
         clientSecret: CLIENT_SECRET,
         refreshToken: REFRESH_TOKEN,
-        accessToken: accessToken,
+        accessToken,
       },
-    });
+    } as SMTPTransport.Options);
+
+    // Cek koneksi SMTP sebelum mengirim
+    await transporter.verify();
 
     console.log("Koneksi Gmail SMTP berhasil");
 
@@ -100,10 +106,14 @@ export const sendOtpEmail = async ({
     console.log("✅ Email OTP berhasil dikirim");
     console.log("📨 Message ID:", info.messageId);
 
-    const data = await transporter.sendMail(mailOptions);
-    return data;
-  } catch (error) {
-    console.error("Gagal mengeksekusi pengiriman email:", error);
-    return null;
+    return info;
+  } catch (error: any) {
+    console.error("DETAIL ERROR EMAIL ASLI:", {
+      message: error?.message,
+      code: error?.code,
+      response: error?.response,
+      stack: error?.stack,
+    });
+    throw error;
   }
 };
