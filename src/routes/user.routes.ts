@@ -6,6 +6,7 @@ import {
   profile,
   updateProfile,
   getUsers,
+  getUserById,
   createUser,
   updateUser,
   deleteUser,
@@ -19,6 +20,12 @@ router.put("/profile", authenticate, requireTenant, updateProfile);
 
 // CRUD USER
 router.get("/", authenticate, requireIzin("manajemen_pengguna.view"), getUsers);
+router.get(
+  "/:id",
+  authenticate,
+  requireIzin("manajemen_pengguna.view"),
+  getUserById,
+);
 router.post(
   "/",
   authenticate,

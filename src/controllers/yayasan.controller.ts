@@ -19,7 +19,7 @@ export const getSekolahBinaan = async (req: AuthRequest, res: Response) => {
         status: true,
         telepon: true,
         email: true,
-        logo: true,
+        logoBesarUrl: true,
         langgananSekolah: {
           orderBy: { dibuatPada: 'desc' },
           take: 1,

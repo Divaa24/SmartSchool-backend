@@ -192,7 +192,7 @@ export const createUser = async (req: AuthRequest, res: Response) => {
         alamatDomisili: alamatDomisili || null,
         kecamatan: kecamatan || null,
         kelurahan: kelurahan || null,
-        kota: kota || null,
+        kotaKabupaten: kota || null,
 
         status: "aktif",
       },
@@ -424,7 +424,8 @@ export const profile = async (req: AuthRequest, res: Response) => {
             alamat: true,
             telepon: true,
             email: true,
-            logo: true,
+            logoBesarUrl: true,
+            logoKecilUrl: true,
             status: true,
           },
         },
@@ -528,5 +529,75 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
       success: false,
       message: "Internal server error",
     });
+  }
+};
+
+export const getUserById = async (req: AuthRequest, res: Response) => {
+  try {
+    const id = req.params.id as string;
+    const sekolahId = req.user?.sekolahId;
+    const roleId = req.user?.roleId;
+
+    const user = await prisma.pengguna.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        namaPengguna: true,
+        namaLengkap: true,
+        avatar: true,
+        nipd: true,
+        nip: true,
+        nuptk: true,
+        nisn: true,
+        nik: true,
+        jabatan: true,
+        golongan: true,
+        jenisKelamin: true,
+        tempatLahir: true,
+        tanggalLahir: true,
+        alamat: true,
+        alamatDomisili: true,
+        noTelepon: true,
+        status: true,
+        dibuatPada: true,
+        sekolah: { select: { id: true, nama: true, kode: true } },
+        peran: { select: { id: true, nama: true, namaTampilan: true } },
+      },
+    });
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Pengguna tidak ditemukan" });
+    }
+
+    // Pengecekan cakupan sekolah jika bukan super_admin/admin_yayasan
+    const userRole = await prisma.peran.findUnique({ where: { id: roleId } });
+    if (
+      userRole?.nama !== "super_admin" &&
+      userRole?.nama !== "admin_yayasan" &&
+      user.sekolah?.id !== sekolahId
+    ) {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Akses ditolak: Pengguna berada di luar sekolah Anda",
+        });
+    }
+
+    return res
+      .status(200)
+      .json({
+        success: true,
+        message: "Detail pengguna berhasil diambil",
+        data: user,
+      });
+  } catch (error) {
+    console.error("Error getUserById:", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Terjadi kesalahan server" });
   }
 };

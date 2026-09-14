@@ -11,20 +11,25 @@ async function main() {
   // ==========================================
   // 1. PERAN (Role)
   // ==========================================
-  const daftarPeran = [
-    {
-      nama: "super_admin",
-      namaTampilan: "Super Admin",
-      deskripsi: "Administrator tertinggi platform global",
-    },
-    {
-      nama: "admin_sekolah",
-      namaTampilan: "Admin Sekolah",
-      deskripsi: "Administrator untuk satu tenant sekolah",
-    },
-    { nama: "guru", namaTampilan: "Guru", deskripsi: "Guru pengajar" },
-    { nama: "siswa", namaTampilan: "Siswa", deskripsi: "Peserta didik" },
-  ];
+const daftarPeran = [
+  {
+    nama: "super_admin",
+    namaTampilan: "Super Admin",
+    deskripsi: "Administrator tertinggi platform global",
+  },
+  {
+    nama: "admin_yayasan",
+    namaTampilan: "Admin Yayasan",
+    deskripsi: "Administrator tingkat yayasan",
+  }, 
+  {
+    nama: "admin_sekolah",
+    namaTampilan: "Admin Sekolah",
+    deskripsi: "Administrator untuk satu tenant sekolah",
+  },
+  { nama: "guru", namaTampilan: "Guru", deskripsi: "Guru pengajar" },
+  { nama: "siswa", namaTampilan: "Siswa", deskripsi: "Peserta didik" },
+];
 
   for (const peran of daftarPeran) {
     const existing = await prisma.peran.findFirst({
@@ -50,6 +55,9 @@ async function main() {
   });
   const peranSiswa = await prisma.peran.findFirst({
     where: { nama: "siswa" },
+  });
+  const peranAdminYayasan = await prisma.peran.findFirst({
+    where: { nama: "admin_yayasan" },
   });
 
   if (!peranSuperAdmin) throw new Error("Peran super_admin tidak ditemukan");
@@ -79,53 +87,71 @@ async function main() {
   // ==========================================
   // 3. MODUL
   // ==========================================
-  const modulList = [
-    {
-      kode: "manajemen_pengguna",
-      nama: "Manajemen Pengguna",
-      deskripsi: "Modul manajemen pengguna",
-      sistem: false,
-    },
-    {
-      kode: "manajemen_sekolah",
-      nama: "Manajemen Sekolah",
-      deskripsi: "Modul manajemen sekolah",
-      sistem: false,
-    },
-    {
-      kode: "akademik",
-      nama: "Akademik",
-      deskripsi: "Modul akademik",
-      sistem: false,
-    },
-    { kode: "tugas", nama: "Tugas", deskripsi: "Modul tugas", sistem: false },
-    { kode: "ujian", nama: "Ujian", deskripsi: "Modul ujian", sistem: false },
-    {
-      kode: "manajemen_aset",
-      nama: "Manajemen Aset",
-      deskripsi: "Modul manajemen aset",
-      sistem: false,
-    },
-    {
-      kode: "cms",
-      nama: "CMS",
-      deskripsi: "Modul CMS (Halaman & Artikel)",
-      sistem: false,
-    },
-    { kode: "ppdb", nama: "PPDB", deskripsi: "Modul PPDB", sistem: false },
-    {
-      kode: "lms",
-      nama: "LMS",
-      deskripsi: "Modul Learning Management System",
-      sistem: false,
-    },
-    {
-      kode: "laporan",
-      nama: "Laporan",
-      deskripsi: "Modul laporan",
-      sistem: false,
-    },
-  ];
+const modulList = [
+  {
+    kode: "manajemen_pengguna",
+    nama: "Manajemen Pengguna",
+    deskripsi: "Modul manajemen pengguna",
+    sistem: false,
+  },
+  {
+    kode: "manajemen_sekolah",
+    nama: "Manajemen Sekolah",
+    deskripsi: "Modul manajemen sekolah",
+    sistem: false,
+  },
+  {
+    kode: "paket",
+    nama: "Paket",
+    deskripsi: "Manajemen Paket Berlangganan",
+    sistem: true,
+  }, 
+  {
+    kode: "langganan",
+    nama: "Langganan",
+    deskripsi: "Manajemen Langganan Sekolah",
+    sistem: true,
+  }, 
+  {
+    kode: "yayasan",
+    nama: "Yayasan",
+    deskripsi: "Manajemen Yayasan",
+    sistem: true,
+  }, 
+  {
+    kode: "akademik",
+    nama: "Akademik",
+    deskripsi: "Modul akademik",
+    sistem: false,
+  },
+  { kode: "tugas", nama: "Tugas", deskripsi: "Modul tugas", sistem: false },
+  { kode: "ujian", nama: "Ujian", deskripsi: "Modul ujian", sistem: false },
+  {
+    kode: "manajemen_aset",
+    nama: "Manajemen Aset",
+    deskripsi: "Modul manajemen aset",
+    sistem: false,
+  },
+  {
+    kode: "cms",
+    nama: "CMS",
+    deskripsi: "Modul CMS (Halaman & Artikel)",
+    sistem: false,
+  },
+  { kode: "ppdb", nama: "PPDB", deskripsi: "Modul PPDB", sistem: false },
+  {
+    kode: "lms",
+    nama: "LMS",
+    deskripsi: "Modul Learning Management System",
+    sistem: false,
+  },
+  {
+    kode: "laporan",
+    nama: "Laporan",
+    deskripsi: "Modul laporan",
+    sistem: false,
+  },
+];
 
   const createdModuls = [];
   for (const m of modulList) {
@@ -178,7 +204,13 @@ async function main() {
 
   const peranIzinMapping = {
     super_admin: { modul: modulList.map((m) => m.kode), aksi: aksiList },
-    admin_sekolah: { modul: modulList.map((m) => m.kode), aksi: aksiList },
+    admin_yayasan: {
+      modul: ["yayasan", "manajemen_sekolah", "laporan"],
+      aksi: aksiList,
+    },
+    admin_sekolah: { modul: modulList.filter(m => m.kode !== "paket" && m.kode !== "yayasan").map((m) => m.kode), 
+      aksi: aksiList 
+    },
     guru: {
       modul: ["akademik", "tugas", "ujian", "lms", "laporan"],
       aksi: ["view", "create", "update"],
