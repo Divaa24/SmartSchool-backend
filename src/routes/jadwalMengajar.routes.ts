@@ -1,4 +1,7 @@
 import { Router } from "express";
+import { authenticate } from "../middlewares/auth.middleware";
+import { requireTenant } from "../middlewares/tenant.middleware";
+import { requireIzin } from "../middlewares/izin.middleware";
 import {
   getJadwalMengajar,
   getJadwalMengajarById,
@@ -6,10 +9,6 @@ import {
   updateJadwalMengajar,
   deleteJadwalMengajar,
 } from "../controllers/jadwalMengajar.controller";
-
-import { authenticate } from "../middlewares/auth.middleware";
-import { requireTenant } from "../middlewares/tenant.middleware";
-
 import {
   createJadwalMengajarSchema,
   updateJadwalMengajarSchema,
@@ -17,45 +16,35 @@ import {
 
 const router = Router();
 
-const validate =
-  (schema: any) =>
-  (req: any, res: any, next: any) => {
-    const result = schema.safeParse(req.body);
+const validate = (schema: any) => (req: any, res: any, next: any) => {
+  const result = schema.safeParse(req.body);
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      message: "Validasi gagal",
+      errors: result.error.flatten(),
+    });
+  }
+  req.body = result.data;
+  next();
+};
 
-    if (!result.success) {
-      return res.status(400).json({
-        success: false,
-        message: "Validasi gagal",
-        errors: result.error.flatten(),
-      });
-    }
+router.use(authenticate, requireTenant);
 
-    req.body = result.data;
-    next();
-  };
-
-router.use(authenticate);
-router.use(requireTenant);
-
-router.get("/", getJadwalMengajar);
-
-router.get("/:id", getJadwalMengajarById);
-
+router.get("/", requireIzin("akademik.view"), getJadwalMengajar);
+router.get("/:id", requireIzin("akademik.view"), getJadwalMengajarById);
 router.post(
   "/",
+  requireIzin("akademik.create"),
   validate(createJadwalMengajarSchema),
-  createJadwalMengajar
+  createJadwalMengajar,
 );
-
 router.put(
   "/:id",
+  requireIzin("akademik.update"),
   validate(updateJadwalMengajarSchema),
-  updateJadwalMengajar
+  updateJadwalMengajar,
 );
-
-router.delete(
-  "/:id",
-  deleteJadwalMengajar
-);
+router.delete("/:id", requireIzin("akademik.delete"), deleteJadwalMengajar);
 
 export default router;

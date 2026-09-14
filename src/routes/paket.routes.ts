@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { authenticate } from "../middlewares/auth.middleware";
+import { requireIzin } from "../middlewares/izin.middleware";
 import {
   getPaketPublic,
   getPaketPublicById,
@@ -7,19 +9,17 @@ import {
   updatePaket,
   deletePaket,
 } from "../controllers/paket.controller";
-import { authenticate } from "../middlewares/auth.middleware";
-import { authorizeRoles } from "../middlewares/role.middleware";
 
 const router = Router();
 
-// PUBLIC ROUTES (Tersedia untuk umum / landing page)
+// PUBLIC
 router.get("/fitur/list", getFiturPublic);
 router.get("/", getPaketPublic);
 router.get("/:id", getPaketPublicById);
 
-// PROTECTED ROUTES (Hanya Super Admin)
-router.post("/", authenticate, authorizeRoles("super_admin"), createPaket);
-router.put("/:id", authenticate, authorizeRoles("super_admin"), updatePaket);
-router.delete("/:id", authenticate, authorizeRoles("super_admin"), deletePaket);
+// SUPER ADMIN
+router.post("/", authenticate, requireIzin("paket.create"), createPaket);
+router.put("/:id", authenticate, requireIzin("paket.update"), updatePaket);
+router.delete("/:id", authenticate, requireIzin("paket.delete"), deletePaket);
 
 export default router;

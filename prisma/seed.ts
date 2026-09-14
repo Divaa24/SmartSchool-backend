@@ -27,25 +27,28 @@ async function main() {
   ];
 
   for (const peran of daftarPeran) {
-    await prisma.peran.upsert({
-      where: { nama: peran.nama },
-      update: {},
-      create: peran,
+    const existing = await prisma.peran.findFirst({
+      where: { nama: peran.nama, sekolahId: null },
     });
+    if (!existing) {
+      await prisma.peran.create({
+        data: { ...peran, sekolahId: null },
+      });
+    }
   }
   console.log("✅ Data Peran (Role) berhasil dibuat!");
 
   // Ambil semua peran untuk referensi
-  const peranSuperAdmin = await prisma.peran.findUnique({
+  const peranSuperAdmin = await prisma.peran.findFirst({
     where: { nama: "super_admin" },
   });
-  const peranAdminSekolah = await prisma.peran.findUnique({
+  const peranAdminSekolah = await prisma.peran.findFirst({
     where: { nama: "admin_sekolah" },
   });
-  const peranGuru = await prisma.peran.findUnique({
+  const peranGuru = await prisma.peran.findFirst({
     where: { nama: "guru" },
   });
-  const peranSiswa = await prisma.peran.findUnique({
+  const peranSiswa = await prisma.peran.findFirst({
     where: { nama: "siswa" },
   });
 
@@ -377,79 +380,79 @@ async function main() {
 
   // 8.3 Tahun Ajaran
   let tahunAjaran = await prisma.tahunAjaran.findFirst({
-      where: {
+    where: {
+      sekolahId: sekolah.id,
+      tahunAjaran: "2025/2026",
+      semester: "Ganjil",
+    },
+  });
+  if (!tahunAjaran) {
+    tahunAjaran = await prisma.tahunAjaran.create({
+      data: {
         sekolahId: sekolah.id,
         tahunAjaran: "2025/2026",
         semester: "Ganjil",
+        status: "aktif",
       },
     });
-    if (!tahunAjaran) {
-      tahunAjaran = await prisma.tahunAjaran.create({
+  }
+  console.log("✅ Tahun Ajaran dummy dibuat");
+
+  // 8.4 Kelas
+  const daftarKelas = [
+    { nama: "XII IPA 1", tingkat: 12 },
+    { nama: "XII IPS 1", tingkat: 12 },
+    { nama: "XI IPA 1", tingkat: 11 },
+    { nama: "XI IPS 1", tingkat: 11 },
+    { nama: "X IPA 1", tingkat: 10 },
+    { nama: "X IPS 1", tingkat: 10 },
+  ];
+
+  const kelasMap: Record<string, any> = {};
+  for (const k of daftarKelas) {
+    let kelas = await prisma.kelas.findFirst({
+      where: {
+        sekolahId: sekolah.id,
+        tahunAjaranId: tahunAjaran.id,
+        nama: k.nama,
+      },
+    });
+    if (!kelas) {
+      kelas = await prisma.kelas.create({
         data: {
-          sekolahId: sekolah.id,
-          tahunAjaran: "2025/2026",
-          semester: "Ganjil",
-          status: "aktif",
-        },
-      });
-    }
-    console.log("✅ Tahun Ajaran dummy dibuat");
-
-    // 8.4 Kelas
-    const daftarKelas = [
-      { nama: "XII IPA 1", tingkat: 12 },
-      { nama: "XII IPS 1", tingkat: 12 },
-      { nama: "XI IPA 1", tingkat: 11 },
-      { nama: "XI IPS 1", tingkat: 11 },
-      { nama: "X IPA 1", tingkat: 10 },
-      { nama: "X IPS 1", tingkat: 10 },
-    ];
-
-    const kelasMap: Record<string, any> = {};
-    for (const k of daftarKelas) {
-      let kelas = await prisma.kelas.findFirst({
-        where: {
           sekolahId: sekolah.id,
           tahunAjaranId: tahunAjaran.id,
           nama: k.nama,
+          tingkat: String(k.tingkat),
         },
       });
-      if (!kelas) {
-        kelas = await prisma.kelas.create({
-          data: {
-            sekolahId: sekolah.id,
-            tahunAjaranId: tahunAjaran.id,
-            nama: k.nama,
-            tingkat: String(k.tingkat),
-          },
-        });
-      }
-      kelasMap[k.nama] = kelas;
     }
-    console.log("✅ Kelas dummy dibuat");
+    kelasMap[k.nama] = kelas;
+  }
+  console.log("✅ Kelas dummy dibuat");
 
-    // 8.5 Mata Pelajaran
-    const daftarMapel = [
-      "Matematika",
-      "Fisika",
-      "Kimia",
-      "Biologi",
-      "Ekonomi",
-      "Geografi",
-      "Sosiologi",
-      "Bahasa Indonesia",
-      "Bahasa Inggris",
-      "Sejarah",
-      "Pendidikan Agama",
-      "Pendidikan Pancasila",
-    ];
+  // 8.5 Mata Pelajaran
+  const daftarMapel = [
+    "Matematika",
+    "Fisika",
+    "Kimia",
+    "Biologi",
+    "Ekonomi",
+    "Geografi",
+    "Sosiologi",
+    "Bahasa Indonesia",
+    "Bahasa Inggris",
+    "Sejarah",
+    "Pendidikan Agama",
+    "Pendidikan Pancasila",
+  ];
 
-    const mapelMap: Record<string, any> = {};
-    for (const nama of daftarMapel) {
-      const kode = nama.substring(0, 3).toUpperCase();
-      let mapel = await prisma.mataPelajaran.findFirst({
-        where: { kode: kode, sekolahId: sekolah.id },
-      });
+  const mapelMap: Record<string, any> = {};
+  for (const nama of daftarMapel) {
+    const kode = nama.substring(0, 3).toUpperCase();
+    let mapel = await prisma.mataPelajaran.findFirst({
+      where: { kode: kode, sekolahId: sekolah.id },
+    });
     if (!mapel) {
       mapel = await prisma.mataPelajaran.create({
         data: {
@@ -521,7 +524,7 @@ async function main() {
   const guruMap: Record<string, any> = {};
   for (const g of daftarGuru) {
     const email = `${g.nama.toLowerCase().replace(/ /g, ".")}@smartschool.com`;
-    let guru = await prisma.pengguna.findUnique({
+    let guru = await prisma.pengguna.findFirst({
       where: { email: email },
     });
     if (!guru) {
@@ -562,7 +565,7 @@ async function main() {
   const siswaList = [];
   for (const s of daftarSiswa) {
     const email = `${s.nama.toLowerCase().replace(/ /g, ".")}@smartschool.com`;
-    let siswa = await prisma.pengguna.findUnique({
+    let siswa = await prisma.pengguna.findFirst({
       where: { email: email },
     });
     if (!siswa) {

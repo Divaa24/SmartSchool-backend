@@ -1,14 +1,13 @@
 import { Router } from "express";
-import { createSiswa } from "../controllers/siswa.controller";
 import { authenticate } from "../middlewares/auth.middleware";
-import { authorizeRoles } from "../middlewares/role.middleware";
 import { requireTenant } from "../middlewares/tenant.middleware";
+import { requireIzin } from "../middlewares/izin.middleware";
+import { createSiswa } from "../controllers/siswa.controller";
 
 const router = Router();
 
 router.use(authenticate, requireTenant);
 
-// Siswa routes
-router.post("/", authorizeRoles("admin_sekolah"), createSiswa);
+router.post("/", requireIzin("akademik.create"), createSiswa);
 
 export default router;

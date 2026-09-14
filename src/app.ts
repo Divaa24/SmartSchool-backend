@@ -12,7 +12,7 @@ import tahunAjaranRoutes from "./routes/tahunAjaran.routes";
 import kelasRoutes from "./routes/kelas.routes";
 import mataPelajaranRoutes from "./routes/mataPelajaran";
 import kelasMapelRoutes from "./routes/kelasMapel.routes";
-import jadwalMengajar  from "./routes/jadwalMengajar.routes";
+import jadwalMengajar from "./routes/jadwalMengajar.routes";
 import materiPembelajaran from "./routes/materiPembelajaran.routes";
 import tugasRoutes from "./routes/tugas.routes";
 import notifikasiRoutes from "./routes/notifikasi.routes";
@@ -23,6 +23,7 @@ import ujianRoutes from "./routes/ujian.routes";
 import infrastrukturRoutes from "./routes/infrastruktur.routes";
 import nilaiRoutes from "./routes/nilai.routes";
 import dashboardRoutes from "./routes/dashboard.routes";
+import roleRoutes from "./routes/peran.routes";
 
 const app: Application = express();
 
@@ -67,7 +68,7 @@ app.use("/api/v1/ujian", ujianRoutes);
 app.use("/api/v1/infrastruktur", infrastrukturRoutes);
 app.use("/api/v1/nilai", nilaiRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
-
+app.use("/api/v1/role", roleRoutes);
 
 setInterval(
   () => {

@@ -1,5 +1,7 @@
 import { Router } from "express";
-
+import { authenticate } from "../middlewares/auth.middleware";
+import { requireTenant } from "../middlewares/tenant.middleware";
+import { requireIzin } from "../middlewares/izin.middleware";
 import {
   profile,
   updateProfile,
@@ -9,54 +11,31 @@ import {
   deleteUser,
 } from "../controllers/user.controller";
 
-import { authenticate } from "../middlewares/auth.middleware";
-import { requireTenant } from "../middlewares/tenant.middleware";
-import { authorizeRoles } from "../middlewares/role.middleware";
-
 const router = Router();
 
 // PROFILE
-router.get(
-  "/profile",
-  authenticate,
-  requireTenant,
-  profile
-);
+router.get("/profile", authenticate, requireTenant, profile);
+router.put("/profile", authenticate, requireTenant, updateProfile);
 
-router.put(
-  "/profile",
-  authenticate,
-  requireTenant,
-  updateProfile
-);
-
-// CRUD PENGGUNA - SUPERADMIN
-router.get(
-  "/",
-  authenticate,
-  authorizeRoles("super_admin"),
-  getUsers
-);
-
+// CRUD USER
+router.get("/", authenticate, requireIzin("manajemen_pengguna.view"), getUsers);
 router.post(
   "/",
   authenticate,
-  authorizeRoles("super_admin"),
-  createUser
+  requireIzin("manajemen_pengguna.create"),
+  createUser,
 );
-
 router.put(
   "/:id",
   authenticate,
-  authorizeRoles("super_admin"),
-  updateUser
+  requireIzin("manajemen_pengguna.update"),
+  updateUser,
 );
-
 router.delete(
   "/:id",
   authenticate,
-  authorizeRoles("super_admin"),
-  deleteUser
+  requireIzin("manajemen_pengguna.delete"),
+  deleteUser,
 );
 
 export default router;

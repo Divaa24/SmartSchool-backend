@@ -26,7 +26,7 @@ export const createSiswa = async (
     });
     if (existingNisn) throw new AppError("NISN sudah terdaftar", 400);
 
-    const peranSiswa = await prisma.peran.findUnique({
+    const peranSiswa = await prisma.peran.findFirst({
       where: { nama: "siswa" },
     });
     if (!peranSiswa)

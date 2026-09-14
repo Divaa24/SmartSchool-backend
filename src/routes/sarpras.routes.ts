@@ -1,4 +1,7 @@
 import { Router } from "express";
+import { authenticate } from "../middlewares/auth.middleware";
+import { requireTenant } from "../middlewares/tenant.middleware";
+import { requireIzin } from "../middlewares/izin.middleware";
 import {
   createGudang,
   getGudang,
@@ -13,27 +16,40 @@ import {
   updateAset,
   deleteAset,
 } from "../controllers/sarpras.controller";
-import { authenticate } from "../middlewares/auth.middleware";
-import { authorizeRoles } from "../middlewares/role.middleware";
-import { requireTenant } from "../middlewares/tenant.middleware";
 
 const router = Router();
 
-router.use(authenticate, requireTenant, authorizeRoles("admin_sekolah"));
+router.use(authenticate, requireTenant);
 
-router.post("/gudang", createGudang);
-router.get("/gudang", getGudang);
-router.put("/gudang/:id", updateGudang);
-router.delete("/gudang/:id", deleteGudang);
+router.post("/gudang", requireIzin("manajemen_aset.create"), createGudang);
+router.get("/gudang", requireIzin("manajemen_aset.view"), getGudang);
+router.put("/gudang/:id", requireIzin("manajemen_aset.update"), updateGudang);
+router.delete(
+  "/gudang/:id",
+  requireIzin("manajemen_aset.delete"),
+  deleteGudang,
+);
 
-router.post("/kategori", createKategoriAset);
-router.get("/kategori", getKategoriAset);
-router.put("/kategori/:id", updateKategoriAset);
-router.delete("/kategori/:id", deleteKategoriAset);
+router.post(
+  "/kategori",
+  requireIzin("manajemen_aset.create"),
+  createKategoriAset,
+);
+router.get("/kategori", requireIzin("manajemen_aset.view"), getKategoriAset);
+router.put(
+  "/kategori/:id",
+  requireIzin("manajemen_aset.update"),
+  updateKategoriAset,
+);
+router.delete(
+  "/kategori/:id",
+  requireIzin("manajemen_aset.delete"),
+  deleteKategoriAset,
+);
 
-router.post("/aset", createAset);
-router.get("/aset", getAset);
-router.put("/aset/:id", updateAset);
-router.delete("/aset/:id", deleteAset);
+router.post("/aset", requireIzin("manajemen_aset.create"), createAset);
+router.get("/aset", requireIzin("manajemen_aset.view"), getAset);
+router.put("/aset/:id", requireIzin("manajemen_aset.update"), updateAset);
+router.delete("/aset/:id", requireIzin("manajemen_aset.delete"), deleteAset);
 
 export default router;

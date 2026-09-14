@@ -43,7 +43,7 @@ export const handleMidtransWebhook = async (
         transaction_status === "capture" ||
         transaction_status === "settlement"
       ) {
-        const peranAdmin = await prisma.peran.findUnique({
+        const peranAdmin = await prisma.peran.findFirst({
           where: { nama: "admin_sekolah" },
         });
         const randomChars = crypto.randomBytes(3).toString("hex").toUpperCase();

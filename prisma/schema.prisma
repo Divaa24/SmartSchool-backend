@@ -90,10 +90,11 @@ model Pengguna {
 
 model Peran {
   id             String    @id @default(uuid())
+  sekolahId      String?   @map("sekolah_id")
   dibuatOleh     String?   @map("dibuat_oleh")
   diperbaruiOleh String?   @map("diperbarui_oleh")
   dihapusOleh    String?   @map("dihapus_oleh")
-  nama           String    @unique @db.VarChar(50)
+  nama           String    @db.VarChar(50)
   namaTampilan   String    @map("nama_tampilan") @db.VarChar(100)
   deskripsi      String?   @db.Text
   status         String?   @db.VarChar(20)
@@ -101,9 +102,11 @@ model Peran {
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
+  sekolah   Sekolah?    @relation(fields: [sekolahId], references: [id], onDelete: Cascade)
   pengguna  Pengguna[]
   peranIzin PeranIzin[]
 
+  @@unique([nama, sekolahId])
   @@map("peran")
 }
 
@@ -190,6 +193,7 @@ model Sekolah {
   auditLogs         AuditLog[]
   pengaturanSistem  PengaturanSistem[]
   menuKonfigurasi   MenuKonfigurasi[]
+  peran             Peran[]
 
   @@map("sekolah")
 }

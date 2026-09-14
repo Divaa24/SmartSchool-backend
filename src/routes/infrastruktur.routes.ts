@@ -1,4 +1,7 @@
 import { Router } from "express";
+import { authenticate } from "../middlewares/auth.middleware";
+import { requireTenant } from "../middlewares/tenant.middleware";
+import { requireIzin } from "../middlewares/izin.middleware";
 import {
   getGedung,
   createGedung,
@@ -9,24 +12,31 @@ import {
   updateLantai,
   deleteLantai,
 } from "../controllers/infrastruktur.controller";
-import { authenticate } from "../middlewares/auth.middleware";
-import { requireTenant } from "../middlewares/tenant.middleware";
-import { authorizeRoles } from "../middlewares/role.middleware";
 
 const router = Router();
 
 router.use(authenticate, requireTenant);
 
-// Gedung
-router.get("/gedung", getGedung);
-router.post("/gedung", authorizeRoles("admin_sekolah"), createGedung);
-router.put("/gedung/:id", authorizeRoles("admin_sekolah"), updateGedung);
-router.delete("/gedung/:id", authorizeRoles("admin_sekolah"), deleteGedung);
+router.get("/gedung", requireIzin("manajemen_aset.view"), getGedung);
+router.post("/gedung", requireIzin("manajemen_aset.create"), createGedung);
+router.put("/gedung/:id", requireIzin("manajemen_aset.update"), updateGedung);
+router.delete(
+  "/gedung/:id",
+  requireIzin("manajemen_aset.delete"),
+  deleteGedung,
+);
 
-// Lantai
-router.get("/lantai/gedung/:gedungId", getLantaiByGedung);
-router.post("/lantai", authorizeRoles("admin_sekolah"), createLantai);
-router.put("/lantai/:id", authorizeRoles("admin_sekolah"), updateLantai);
-router.delete("/lantai/:id", authorizeRoles("admin_sekolah"), deleteLantai);
+router.get(
+  "/lantai/gedung/:gedungId",
+  requireIzin("manajemen_aset.view"),
+  getLantaiByGedung,
+);
+router.post("/lantai", requireIzin("manajemen_aset.create"), createLantai);
+router.put("/lantai/:id", requireIzin("manajemen_aset.update"), updateLantai);
+router.delete(
+  "/lantai/:id",
+  requireIzin("manajemen_aset.delete"),
+  deleteLantai,
+);
 
 export default router;
