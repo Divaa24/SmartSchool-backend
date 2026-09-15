@@ -174,7 +174,7 @@ export const verifyAndPay = async (
       });
     } else {
       // LOGIKA JIKA PAKET GRATIS / TRIAL (Tidak ada perubahan)
-      const peranAdmin = await prisma.peran.findUnique({
+      const peranAdmin = await prisma.peran.findFirst({
         where: { nama: "admin_sekolah" },
       });
       if (!peranAdmin)

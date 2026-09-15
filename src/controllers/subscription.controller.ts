@@ -218,7 +218,7 @@ export const extendSubscription = async (
         where: {
           sekolahId: req.user.sekolahId,
           statusLangganan: "active",
-          dihapusPada: null,
+          dihapusOleh: null,
         },
         orderBy: {
           tanggalBerakhir: "desc",

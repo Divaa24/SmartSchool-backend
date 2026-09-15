@@ -1,11 +1,12 @@
 {
   "name": "smartschool-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "npx prisma generate && npx tsc",
-    "start": "node dist/src/server.js"
+    "build": "tsc",
+    "postinstall": "prisma generate",
+    "start": "node dist/server.js"
   },
   "keywords": [],
   "author": "",
@@ -43,7 +44,7 @@
     "bcryptjs": "^3.0.3",
     "install": "^0.13.0",
     "npm": "^11.19.0",
-    "tsx": "^4.23.5",
+    "tsx": "^4.23.13",
     "typescript": "^7.0.2"
   },
   "prisma": {

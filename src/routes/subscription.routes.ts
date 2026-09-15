@@ -1,45 +1,45 @@
 import { Router } from "express";
+import { authenticate } from "../middlewares/auth.middleware";
+import { requireTenant } from "../middlewares/tenant.middleware";
+import { requireIzin } from "../middlewares/izin.middleware";
 import {
   createPayment,
   getPendingPayments,
   extendSubscription,
   getAllLanggananSekolah,
 } from "../controllers/subscription.controller";
-import { authenticate } from "../middlewares/auth.middleware";
-import { requireTenant } from "../middlewares/tenant.middleware";
-import { authorizeRoles } from "../middlewares/role.middleware";
 
 const router = Router();
 
 router.get(
   "/",
   authenticate,
-  authorizeRoles("super_admin"),
-  getAllLanggananSekolah
+  requireIzin("langganan.view_all"),
+  getAllLanggananSekolah,
 );
 
 router.post(
   "/bayar",
   authenticate,
   requireTenant,
-  authorizeRoles("admin_sekolah"),
-  createPayment
+  requireIzin("manajemen_sekolah.update"),
+  createPayment,
 );
 
 router.get(
   "/pending",
   authenticate,
   requireTenant,
-  authorizeRoles("admin_sekolah"),
-  getPendingPayments
+  requireIzin("manajemen_sekolah.view"),
+  getPendingPayments,
 );
 
 router.post(
   "/perpanjang",
   authenticate,
   requireTenant,
-  authorizeRoles("admin_sekolah"),
-  extendSubscription
+  requireIzin("manajemen_sekolah.update"),
+  extendSubscription,
 );
 
 export default router;

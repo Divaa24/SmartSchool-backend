@@ -1,4 +1,7 @@
 import { Router } from "express";
+import { authenticate } from "../middlewares/auth.middleware";
+import { requireTenant } from "../middlewares/tenant.middleware";
+import { requireIzin } from "../middlewares/izin.middleware";
 import {
   createUjian,
   getUjianByKelasMapel,
@@ -8,23 +11,26 @@ import {
   mulaiPercobaanUjian,
   submitJawabanDanSelesai,
 } from "../controllers/ujian.controller";
-import { authenticate } from "../middlewares/auth.middleware";
-import { authorizeRoles } from "../middlewares/role.middleware";
-import { requireTenant } from "../middlewares/tenant.middleware";
 
 const router = Router();
 
 router.use(authenticate, requireTenant);
 
-// Guru operations
-router.post("/", authorizeRoles("guru"), createUjian);
-router.put("/:id", authorizeRoles("guru"), updateUjian);
-router.delete("/:id", authorizeRoles("guru"), deleteUjian);
+router.post("/", requireIzin("ujian.create"), createUjian);
+router.put("/:id", requireIzin("ujian.update"), updateUjian);
+router.delete("/:id", requireIzin("ujian.delete"), deleteUjian);
 
-// Shared / Siswa
-router.get("/kelas-mapel/:kelasMapelId", getUjianByKelasMapel);
-router.get("/:id", getDetailUjian);
-router.post("/:id/mulai", authorizeRoles("siswa"), mulaiPercobaanUjian);
-router.post("/sesi/:sesiId/submit", authorizeRoles("siswa"), submitJawabanDanSelesai);
+router.get(
+  "/kelas-mapel/:kelasMapelId",
+  requireIzin("ujian.view"),
+  getUjianByKelasMapel,
+);
+router.get("/:id", requireIzin("ujian.view"), getDetailUjian);
+router.post("/:id/mulai", requireIzin("ujian.view"), mulaiPercobaanUjian);
+router.post(
+  "/sesi/:sesiId/submit",
+  requireIzin("ujian.view"),
+  submitJawabanDanSelesai,
+);
 
 export default router;

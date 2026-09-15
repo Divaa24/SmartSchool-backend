@@ -22,13 +22,13 @@ if (
   !GOOGLE_SENDER_EMAIL
 ) {
   throw new Error(
-    "Konfigurasi Gmail OAuth2 belum lengkap di environment variables"
+    "Konfigurasi Gmail OAuth2 belum lengkap di environment variables",
   );
 }
 
 const oauth2Client = new google.auth.OAuth2(
   GOOGLE_CLIENT_ID,
-  GOOGLE_CLIENT_SECRET
+  GOOGLE_CLIENT_SECRET,
 );
 
 oauth2Client.setCredentials({
@@ -41,7 +41,6 @@ export const sendOtpEmail = async ({
   kodeOtp,
 }: SendOtpParams) => {
   try {
-    // Ambil access token dari refresh token
     const accessTokenResponse = await oauth2Client.getAccessToken();
 
     const accessToken = accessTokenResponse.token;
@@ -50,7 +49,6 @@ export const sendOtpEmail = async ({
       throw new Error("Gagal mendapatkan Google OAuth2 access token");
     }
 
-    // Buat transporter Gmail
     const transporter = nodemailer.createTransport({
       service: "gmail",
       family: 4,
@@ -64,7 +62,6 @@ export const sendOtpEmail = async ({
       },
     } as SMTPTransport.Options);
 
-    // Cek koneksi SMTP sebelum mengirim
     await transporter.verify();
 
     console.log("Koneksi Gmail SMTP berhasil");
@@ -73,7 +70,6 @@ export const sendOtpEmail = async ({
       from: `"SmartSchool" <${GOOGLE_SENDER_EMAIL}>`,
       to: email,
       subject: "Kode OTP Registrasi SmartSchool",
-
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6;">
           <h2>Verifikasi Registrasi SmartSchool</h2>
@@ -115,12 +111,17 @@ export const sendOtpEmail = async ({
       `,
     });
 
-    console.log("✅ Email OTP berhasil dikirim");
-    console.log("📨 Message ID:", info.messageId);
+    console.log("Email OTP berhasil dikirim");
+    console.log("Message ID:", info.messageId);
 
     return info;
-  } catch (error) {
-    console.error("Gagal mengirim email OTP:", error);
+  } catch (error: any) {
+    console.error("DETAIL ERROR EMAIL ASLI:", {
+      message: error?.message,
+      code: error?.code,
+      response: error?.response,
+      stack: error?.stack,
+    });
 
     throw error;
   }

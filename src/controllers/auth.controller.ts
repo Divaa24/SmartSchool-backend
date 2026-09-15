@@ -12,6 +12,7 @@ import { generateOtp } from "../utils/generateOtp";
 import { sendOtpEmail } from "../utils/email";
 import { AppError } from "../utils/appError";
 import { generateAccessToken } from "../utils/generateToken";
+import { ambilIzinDanModul } from "../services/auth.services";
 
 export const register = async (req: Request, res: Response) => {
   const data = registerSchema.parse(req.body);
@@ -64,9 +65,9 @@ export const register = async (req: Request, res: Response) => {
     });
   } catch (err) {
     throw new AppError(
-      "Registrasi berhasil, tapi gagal mengirim email OTP. Silakan coba lagi.",
-      502
-    );
+  "Registrasi berhasil, tapi gagal mengirim email OTP. Silakan coba lagi.",
+  502,
+);
   }
 
   return res.status(200).json({
@@ -83,7 +84,12 @@ export const verifyRegister = async (req: Request, res: Response) => {
   });
 
   if (!user || user.status !== "menunggu_verifikasi") {
-    throw new AppError("Pengguna tidak ditemukan atau sudah terverifikasi", 400);
+
+
+    throw new AppError(
+      "Pengguna tidak ditemukan atau sudah terverifikasi",
+      400,
+    );
   }
 
   if (user.kodeOtp !== data.kodeOtp) {
@@ -116,6 +122,11 @@ export const verifyRegister = async (req: Request, res: Response) => {
     throw new AppError("Data pengguna tidak ditemukan", 404);
   }
 
+  const { izin, modulAktif } = await ambilIzinDanModul(
+    user.peranId ?? null,
+    user.sekolahId ?? null,
+  );
+
   const token = generateAccessToken({
     userId: userWithRole.id,
     email: userWithRole.email,
@@ -123,6 +134,8 @@ export const verifyRegister = async (req: Request, res: Response) => {
     role: userWithRole.peran?.nama ?? undefined,
     sekolahId: userWithRole.sekolahId ?? undefined,
     yayasanId: userWithRole.yayasanId ?? undefined,
+    izin,
+    modulAktif,
   });
 
   return res.status(200).json({
@@ -165,6 +178,11 @@ export const login = async (req: Request, res: Response) => {
     data: { terakhirLogin: new Date() },
   });
 
+  const { izin, modulAktif } = await ambilIzinDanModul(
+    user.peranId ?? null,
+    user.sekolahId ?? null,
+  );
+
   const token = generateAccessToken({
     userId: user.id,
     email: user.email,
@@ -172,6 +190,8 @@ export const login = async (req: Request, res: Response) => {
     role: user.peran?.nama ?? undefined,
     sekolahId: user.sekolahId ?? undefined,
     yayasanId: user.yayasanId ?? undefined,
+    izin,
+    modulAktif,
   });
 
   return res.status(200).json({
@@ -212,7 +232,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
   } catch (err) {
     throw new AppError(
       "Gagal mengirim email OTP reset password. Silakan coba lagi.",
-      502
+      502,
     );
   }
 

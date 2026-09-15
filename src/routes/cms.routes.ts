@@ -1,4 +1,7 @@
 import { Router } from "express";
+import { authenticate } from "../middlewares/auth.middleware";
+import { requireTenant } from "../middlewares/tenant.middleware";
+import { requireIzin } from "../middlewares/izin.middleware";
 import {
   createKategoriArtikel,
   getKategoriArtikel,
@@ -13,27 +16,36 @@ import {
   updateHalamanCms,
   deleteHalamanCms,
 } from "../controllers/cms.controller";
-import { authenticate } from "../middlewares/auth.middleware";
-import { authorizeRoles } from "../middlewares/role.middleware";
-import { requireTenant } from "../middlewares/tenant.middleware";
 
 const router = Router();
 
-router.use(authenticate, requireTenant, authorizeRoles("admin_sekolah"));
+router.use(authenticate, requireTenant);
 
-router.post("/kategori-artikel", createKategoriArtikel);
-router.get("/kategori-artikel", getKategoriArtikel);
-router.put("/kategori-artikel/:id", updateKategoriArtikel);
-router.delete("/kategori-artikel/:id", deleteKategoriArtikel);
+router.post(
+  "/kategori-artikel",
+  requireIzin("cms.create"),
+  createKategoriArtikel,
+);
+router.get("/kategori-artikel", requireIzin("cms.view"), getKategoriArtikel);
+router.put(
+  "/kategori-artikel/:id",
+  requireIzin("cms.update"),
+  updateKategoriArtikel,
+);
+router.delete(
+  "/kategori-artikel/:id",
+  requireIzin("cms.delete"),
+  deleteKategoriArtikel,
+);
 
-router.post("/artikel", createArtikelCms);
-router.get("/artikel", getArtikelCms);
-router.put("/artikel/:id", updateArtikelCms);
-router.delete("/artikel/:id", deleteArtikelCms);
+router.post("/artikel", requireIzin("cms.create"), createArtikelCms);
+router.get("/artikel", requireIzin("cms.view"), getArtikelCms);
+router.put("/artikel/:id", requireIzin("cms.update"), updateArtikelCms);
+router.delete("/artikel/:id", requireIzin("cms.delete"), deleteArtikelCms);
 
-router.post("/halaman", createHalamanCms);
-router.get("/halaman", getHalamanCms);
-router.put("/halaman/:id", updateHalamanCms);
-router.delete("/halaman/:id", deleteHalamanCms);
+router.post("/halaman", requireIzin("cms.create"), createHalamanCms);
+router.get("/halaman", requireIzin("cms.view"), getHalamanCms);
+router.put("/halaman/:id", requireIzin("cms.update"), updateHalamanCms);
+router.delete("/halaman/:id", requireIzin("cms.delete"), deleteHalamanCms);
 
 export default router;

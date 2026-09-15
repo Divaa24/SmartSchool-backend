@@ -96,65 +96,54 @@ export const createAbsensi = async (
     }
 
     let urlFotoSaved = null;
+if (data.metode === "face") {
+  if (!file) {
+    throw new AppError("Foto wajah dari kamera wajib disertakan", 400);
+  }
 
-    if (data.metode === "face") {
-      if (!file) {
-        throw new AppError("Foto wajah wajib disertakan", 400);
-      }
+  // CEK DATA BIOMETRIK ALIH-ALIH AVATAR
+  const biometrik = await prisma.biometrikWajah.findUnique({
+    where: { penggunaId: userId },
+  });
 
-      if (!siswa.avatar) {
-        throw new AppError(
-          "Anda belum mengatur foto profil untuk dicocokkan",
-          400
-        );
-      }
+  if (!biometrik || !biometrik.urlFotoReferensi) {
+    throw new AppError(
+      "Data biometrik wajah belum terdaftar. Silakan hubungi admin untuk registrasi Face ID terlebih dahulu.",
+      400,
+    );
+  }
 
-      const formData = new FormData();
+  const formData = new FormData();
+  const aiServiceUrl = process.env.AI_SERVICE_URL || "http://localhost:8000";
 
-      const aiServiceUrl =
-        process.env.AI_SERVICE_URL || "http://localhost:8000";
+  // Ambil foto referensi dari tabel biometrik_wajah
+  const masterPath = process.cwd() + biometrik.urlFotoReferensi;
 
-      const masterPath = process.cwd() + siswa.avatar;
+  formData.append("master_image", fs.createReadStream(masterPath));
+  formData.append("snapshot_image", fs.createReadStream(file.path));
 
-      formData.append(
-        "master_image",
-        fs.createReadStream(masterPath)
-      );
+  try {
+    const aiResponse = await axios.post(
+      `${aiServiceUrl}/verify-face`,
+      formData,
+      {
+        headers: formData.getHeaders(),
+      },
+    );
 
-      formData.append(
-        "snapshot_image",
-        fs.createReadStream(file.path)
-      );
-
-      try {
-        const aiResponse = await axios.post(
-          `${aiServiceUrl}/verify-face`,
-          formData,
-          {
-            headers: formData.getHeaders(),
-          }
-        );
-
-        if (!aiResponse.data.matched) {
-          throw new AppError(
-            `Wajah tidak cocok: ${aiResponse.data.message}`,
-            400
-          );
-        }
-      } catch (error: any) {
-        if (error instanceof AppError) {
-          throw error;
-        }
-
-        throw new AppError(
-          error.response?.data?.message ||
-            "Gagal menghubungi AI Face Recognition Server",
-          500
-        );
-      }
-
-      urlFotoSaved = `/uploads/absensi/${file.filename}`;
+    if (!aiResponse.data.matched) {
+      throw new AppError(`Wajah tidak cocok: ${aiResponse.data.message}`, 400);
     }
+  } catch (error: any) {
+    if (error instanceof AppError) throw error;
+    throw new AppError(
+      error.response?.data?.message || "Gagal menghubungi AI Face Server",
+      500,
+    );
+  }
+
+  urlFotoSaved = `/uploads/absensi/${file.filename}`;
+}
 
     const hariIni = new Date();
     hariIni.setHours(0, 0, 0, 0);

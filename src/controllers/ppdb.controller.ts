@@ -418,7 +418,7 @@ export const verifikasiPpdb = async (
     }
 
     const roleSiswa =
-      await prisma.peran.findUnique({
+      await prisma.peran.findFirst({
         where: {
           nama: "siswa",
         },

@@ -1,19 +1,18 @@
 import { Router } from "express";
-import { 
-  getSekolahBinaan, 
-  getDashboardSummary, 
-  getDetailSekolahBinaan 
+import {
+  getSekolahBinaan,
+  getDashboardSummary,
+  getDetailSekolahBinaan,
 } from "../controllers/yayasan.controller";
 import { authenticate } from "../middlewares/auth.middleware";
-import { authorizeRoles } from "../middlewares/role.middleware";
+import { requireIzin } from "../middlewares/izin.middleware"; // <-- Gunakan izin granular
 
 const router = Router();
 
-// Semua rute di bawah ini HANYA boleh diakses oleh admin_yayasan
-router.use(authenticate, authorizeRoles("admin_yayasan"));
+router.use(authenticate);
 
-router.get("/summary", getDashboardSummary); // Metrik Dashboard (Kartu-kartu atas)
-router.get("/sekolah", getSekolahBinaan);    // Tabel daftar sekolah binaan
-router.get("/sekolah/:id", getDetailSekolahBinaan); // Detail satu sekolah
+router.get("/summary", requireIzin("yayasan.view"), getDashboardSummary);
+router.get("/sekolah", requireIzin("yayasan.view"), getSekolahBinaan);
+router.get("/sekolah/:id", requireIzin("yayasan.view"), getDetailSekolahBinaan);
 
 export default router;

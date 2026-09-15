@@ -18,7 +18,8 @@ export const createUjian = async (
   try {
     const userId = (req as AuthRequest).user?.userId as string;
     const validated = createUjianSchema.parse(req.body);
-
+    const generatedToken = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
     const checkKelasMapel = await prisma.kelasMapel.findFirst({
       where: { id: validated.kelasMapelId, guruPengajarId: userId },
     });
@@ -46,6 +47,7 @@ export const createUjian = async (
         modeAsesmen: validated.modeUjian,
         dipublikasikan: validated.dipublikasikan,
         penilaianOtomatis: validated.penilaianOtomatis,
+        token: generatedToken,
         dibuatOleh: userId,
       },
     });
@@ -213,6 +215,9 @@ export const mulaiPercobaanUjian = async (
       throw new AppError("Waktu pelaksanaan ujian belum dimulai", 400);
     if (asesmen.waktuSelesai && now > asesmen.waktuSelesai)
       throw new AppError("Waktu pelaksanaan ujian telah berakhir", 400);
+    if (asesmen.token && token.toUpperCase() !== asesmen.token.toUpperCase()) {
+      throw new AppError("Token ujian tidak valid.", 400);
+    }
 
     const validToken = asesmen.id
       .replace(/-/g, "")
@@ -224,6 +229,8 @@ export const mulaiPercobaanUjian = async (
         400,
       );
     }
+
+    const tokenSesi = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     const existingSesi = await prisma.percobaanAsesmen.findFirst({
       where: { asesmenId: ujianId, siswaId: userId },
@@ -242,15 +249,16 @@ export const mulaiPercobaanUjian = async (
       );
     }
 
-    const sesiBaru = await prisma.percobaanAsesmen.create({
-      data: {
-        asesmenId: ujianId,
-        siswaId: userId,
-        dimulaiPada: now,
-        status: "berlangsung",
-        dibuatOleh: userId,
-      },
-    });
+ const sesiBaru = await prisma.percobaanAsesmen.create({
+   data: {
+     asesmenId: ujianId,
+     siswaId: userId,
+     dimulaiPada: now,
+     status: "berlangsung",
+     tokenSesi: tokenSesi, // <-- Simpan token sesi
+     dibuatOleh: userId,
+   },
+ });
 
     return successResponse(res, "Sesi ujian berhasil dimulai", sesiBaru, 201);
   } catch (error) {

@@ -1,36 +1,27 @@
 import { Router } from "express";
-
+import { authenticate } from "../middlewares/auth.middleware";
+import { requireTenant } from "../middlewares/tenant.middleware";
+import { requireIzin } from "../middlewares/izin.middleware";
 import {
   daftarPpdb,
   uploadBerkasPpdb,
   verifikasiPpdb,
 } from "../controllers/ppdb.controller";
-
-import { authenticate } from "../middlewares/auth.middleware";
-import { requireTenant } from "../middlewares/tenant.middleware";
-import { authorizeRoles } from "../middlewares/role.middleware";
-
 import { uploadPpdb } from "../middlewares/uploadPpdb.middleware";
 
 const router = Router();
 
-router.post(
-  "/daftar",
-  daftarPpdb
-);
+// PUBLIC
+router.post("/daftar", daftarPpdb);
+router.post("/:id/berkas", uploadPpdb.single("file"), uploadBerkasPpdb);
 
-router.post(
-  "/:id/berkas",
-  uploadPpdb.single("file"),
-  uploadBerkasPpdb
-);
-
+// ADMIN SEKOLAH
 router.patch(
   "/:id/verifikasi",
   authenticate,
   requireTenant,
-  authorizeRoles("admin_sekolah"),
-  verifikasiPpdb
+  requireIzin("ppdb.update"),
+  verifikasiPpdb,
 );
 
 export default router;

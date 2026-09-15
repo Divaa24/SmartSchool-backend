@@ -1,5 +1,7 @@
 import { Router } from "express";
-
+import { authenticate } from "../middlewares/auth.middleware";
+import { requireTenant } from "../middlewares/tenant.middleware";
+import { requireIzin } from "../middlewares/izin.middleware";
 import {
   getJalurPpdb,
   getJalurPpdbById,
@@ -8,50 +10,14 @@ import {
   deleteJalurPpdb,
 } from "../controllers/jalurPpdb.controller";
 
-import { authenticate } from "../middlewares/auth.middleware";
-import { requireTenant } from "../middlewares/tenant.middleware";
-import { authorizeRoles } from "../middlewares/role.middleware";
-
 const router = Router();
 
-router.get(
-  "/",
-  authenticate,
-  requireTenant,
-  authorizeRoles("admin_sekolah"),
-  getJalurPpdb
-);
+router.use(authenticate, requireTenant);
 
-router.get(
-  "/:id",
-  authenticate,
-  requireTenant,
-  authorizeRoles("admin_sekolah"),
-  getJalurPpdbById
-);
-
-router.post(
-  "/",
-  authenticate,
-  requireTenant,
-  authorizeRoles("admin_sekolah"),
-  createJalurPpdb
-);
-
-router.put(
-  "/:id",
-  authenticate,
-  requireTenant,
-  authorizeRoles("admin_sekolah"),
-  updateJalurPpdb
-);
-
-router.delete(
-  "/:id",
-  authenticate,
-  requireTenant,
-  authorizeRoles("admin_sekolah"),
-  deleteJalurPpdb
-);
+router.get("/", requireIzin("ppdb.view"), getJalurPpdb);
+router.get("/:id", requireIzin("ppdb.view"), getJalurPpdbById);
+router.post("/", requireIzin("ppdb.create"), createJalurPpdb);
+router.put("/:id", requireIzin("ppdb.update"), updateJalurPpdb);
+router.delete("/:id", requireIzin("ppdb.delete"), deleteJalurPpdb);
 
 export default router;

@@ -1,9 +1,17 @@
 import { Router } from "express";
-import { exportRekapNilai } from "../controllers/nilai.controller";
 import { authenticate } from "../middlewares/auth.middleware";
+import { requireTenant } from "../middlewares/tenant.middleware";
+import { requireIzin } from "../middlewares/izin.middleware";
+import { exportRekapNilai } from "../controllers/nilai.controller";
 
 const router = Router();
 
-router.get("/export", authenticate, exportRekapNilai);
+router.get(
+  "/export",
+  authenticate,
+  requireTenant,
+  requireIzin("laporan.view"),
+  exportRekapNilai,
+);
 
 export default router;

@@ -56,7 +56,7 @@ model Pengguna {
 
   alamatDomisili       String?  @map("alamat_domisili") @db.Text
   alamatSesuaiDomisili Boolean? @default(true) @map("alamat_sesuai_domisili")
-  noTelepon       String?  @map("no_telepon_rumah") @db.VarChar(20)
+  noTelepon            String?  @map("no_telepon_rumah") @db.VarChar(20)
   namaWaliPesertaDidik String?  @map("nama_wali_peserta_didik") @db.VarChar(20)
 
   status        String?   @db.VarChar(20)
@@ -90,10 +90,11 @@ model Pengguna {
 
 model Peran {
   id             String    @id @default(uuid())
+  sekolahId      String?   @map("sekolah_id")
   dibuatOleh     String?   @map("dibuat_oleh")
   diperbaruiOleh String?   @map("diperbarui_oleh")
   dihapusOleh    String?   @map("dihapus_oleh")
-  nama           String    @unique @db.VarChar(50)
+  nama           String    @db.VarChar(50)
   namaTampilan   String    @map("nama_tampilan") @db.VarChar(100)
   deskripsi      String?   @db.Text
   status         String?   @db.VarChar(20)
@@ -101,9 +102,11 @@ model Peran {
   diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
+  sekolah   Sekolah?    @relation(fields: [sekolahId], references: [id], onDelete: Cascade)
   pengguna  Pengguna[]
   peranIzin PeranIzin[]
 
+  @@unique([nama, sekolahId])
   @@map("peran")
 }
 
@@ -190,6 +193,7 @@ model Sekolah {
   auditLogs         AuditLog[]
   pengaturanSistem  PengaturanSistem[]
   menuKonfigurasi   MenuKonfigurasi[]
+  peran             Peran[]
 
   @@map("sekolah")
 }
@@ -323,20 +327,20 @@ model LanggananSekolah {
 }
 
 model RiwayatPembayaran {
-  id                 String   @id @default(uuid())
-  langgananSekolahId String   @map("langganan_sekolah_id")
-  sekolahId          String   @map("sekolah_id")
-  dibuatOleh         String?  @map("dibuat_oleh")
-  diperbaruiOleh     String?  @map("diperbarui_oleh")
-  dihapusOleh        String?  @map("dihapus_oleh")
-  sumberTagihan      String?  @map("sumber_tagihan") @db.VarChar(50)
-  jumlah             Decimal? @db.Decimal(15, 2)
-  metode             String?  @db.VarChar(50)
-  status             String?  @db.VarChar(20)
-  midtransPaymentId  String?  @map("midtrans_payment_id") @db.VarChar(100)
-  midtransInvoiceId  String?  @map("midtrans_invoice_id") @db.VarChar(100)
-  webhookRawPayload  Json?    @map("webhook_raw_payload")
-  dibuatPada         DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
+  id                 String    @id @default(uuid())
+  langgananSekolahId String    @map("langganan_sekolah_id")
+  sekolahId          String    @map("sekolah_id")
+  dibuatOleh         String?   @map("dibuat_oleh")
+  diperbaruiOleh     String?   @map("diperbarui_oleh")
+  dihapusOleh        String?   @map("dihapus_oleh")
+  sumberTagihan      String?   @map("sumber_tagihan") @db.VarChar(50)
+  jumlah             Decimal?  @db.Decimal(15, 2)
+  metode             String?   @db.VarChar(50)
+  status             String?   @db.VarChar(20)
+  midtransPaymentId  String?   @map("midtrans_payment_id") @db.VarChar(100)
+  midtransInvoiceId  String?   @map("midtrans_invoice_id") @db.VarChar(100)
+  webhookRawPayload  Json?     @map("webhook_raw_payload")
+  dibuatPada         DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
   dihapusPada        DateTime? @map("dihapus_pada") @db.Timestamp()
 
   langgananSekolah LanggananSekolah @relation(fields: [langgananSekolahId], references: [id])
@@ -703,6 +707,7 @@ model Asesmen {
   judul             String    @db.VarChar(100)
   deskripsi         String?   @db.Text
   tipe              String    @db.VarChar(20)
+  token             String?   @db.VarChar(10)
   durasi            Int
   waktuMulai        DateTime? @map("waktu_mulai") @db.Timestamp()
   waktuSelesai      DateTime? @map("waktu_selesai") @db.Timestamp()
@@ -736,8 +741,8 @@ model SoalAsesmen {
   poin         Decimal @db.Decimal(5, 2)
   nomorUrut    Int     @map("nomor_urut")
 
-  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
   asesmen        Asesmen          @relation(fields: [asesmenId], references: [id])
@@ -756,11 +761,12 @@ model PercobaanAsesmen {
 
   dimulaiPada DateTime  @map("dimulai_pada") @db.Timestamp()
   selesaiPada DateTime? @map("selesai_pada") @db.Timestamp()
+  tokenSesi   String?   @map("token_sesi") @db.VarChar(255)
   nilai       Decimal?  @db.Decimal(5, 2)
   status      String?   @db.VarChar(20)
 
-  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
   asesmen        Asesmen          @relation(fields: [asesmenId], references: [id])
@@ -784,8 +790,8 @@ model JawabanAsesmen {
   catatanGuru String?  @map("catatan_guru") @db.Text
   benar       Boolean?
 
-  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
   percobaanAsesmen PercobaanAsesmen @relation(fields: [percobaanAsesmenId], references: [id])
@@ -807,8 +813,8 @@ model HasilAsesmen {
   jumlahLewati Int     @map("jumlah_lewati")
   detail       Json?
 
-  dibuatPada     DateTime @default(now()) @map("dibuat_pada") @db.Timestamp()
-  diperbaruiPada DateTime @updatedAt @map("diperbarui_pada") @db.Timestamp()
+  dibuatPada     DateTime  @default(now()) @map("dibuat_pada") @db.Timestamp()
+  diperbaruiPada DateTime  @updatedAt @map("diperbarui_pada") @db.Timestamp()
   dihapusPada    DateTime? @map("dihapus_pada") @db.Timestamp()
 
   percobaanAsesmen PercobaanAsesmen @relation(fields: [percobaanAsesmenId], references: [id])

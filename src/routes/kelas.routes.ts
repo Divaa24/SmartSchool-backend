@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../middlewares/auth.middleware";
 import { requireTenant } from "../middlewares/tenant.middleware";
-import { authorizeRoles } from "../middlewares/role.middleware";
+import { requireIzin } from "../middlewares/izin.middleware";
 import {
   createKelas,
   getKelas,
@@ -14,10 +14,10 @@ const router = Router();
 
 router.use(authenticate, requireTenant);
 
-router.get("/", getKelas);
-router.get("/:id", getDetailKelas);
-router.post("/", authorizeRoles("admin_sekolah"), createKelas);
-router.put("/:id", authorizeRoles("admin_sekolah"), updateKelas);
-router.delete("/:id", authorizeRoles("admin_sekolah"), deleteKelas);
+router.get("/", requireIzin("akademik.view"), getKelas);
+router.get("/:id", requireIzin("akademik.view"), getDetailKelas);
+router.post("/", requireIzin("akademik.create"), createKelas);
+router.put("/:id", requireIzin("akademik.update"), updateKelas);
+router.delete("/:id", requireIzin("akademik.delete"), deleteKelas);
 
 export default router;
