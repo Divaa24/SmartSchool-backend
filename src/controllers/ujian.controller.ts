@@ -215,22 +215,13 @@ export const mulaiPercobaanUjian = async (
       throw new AppError("Waktu pelaksanaan ujian belum dimulai", 400);
     if (asesmen.waktuSelesai && now > asesmen.waktuSelesai)
       throw new AppError("Waktu pelaksanaan ujian telah berakhir", 400);
-    if (asesmen.token && token.toUpperCase() !== asesmen.token.toUpperCase()) {
+    const tokenSeharusnya =
+      (asesmen as any).token ||
+      asesmen.id.replace(/-/g, "").substring(0, 6).toUpperCase();
+
+    if (token.trim().toUpperCase() !== tokenSeharusnya.trim().toUpperCase()) {
       throw new AppError("Token ujian tidak valid.", 400);
     }
-
-    const validToken = asesmen.id
-      .replace(/-/g, "")
-      .substring(0, 6)
-      .toUpperCase();
-    if (token.toUpperCase() !== validToken) {
-      throw new AppError(
-        `Token ujian tidak valid. (Gunakan: ${validToken} untuk testing)`,
-        400,
-      );
-    }
-
-    const tokenSesi = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     const existingSesi = await prisma.percobaanAsesmen.findFirst({
       where: { asesmenId: ujianId, siswaId: userId },
@@ -249,16 +240,15 @@ export const mulaiPercobaanUjian = async (
       );
     }
 
- const sesiBaru = await prisma.percobaanAsesmen.create({
-   data: {
-     asesmenId: ujianId,
-     siswaId: userId,
-     dimulaiPada: now,
-     status: "berlangsung",
-     tokenSesi: tokenSesi, // <-- Simpan token sesi
-     dibuatOleh: userId,
-   },
- });
+    const sesiBaru = await prisma.percobaanAsesmen.create({
+      data: {
+        asesmenId: ujianId,
+        siswaId: userId,
+        dimulaiPada: now,
+        status: "berlangsung",
+        dibuatOleh: userId,
+      },
+    });
 
     return successResponse(res, "Sesi ujian berhasil dimulai", sesiBaru, 201);
   } catch (error) {
